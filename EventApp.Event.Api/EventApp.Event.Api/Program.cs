@@ -23,14 +23,18 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 var app = builder.Build();
 
 
 if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options => {
+
+        options.Theme = ScalarTheme.BluePlanet;
+
+    });
     app.UseDeveloperExceptionPage();
 }
 

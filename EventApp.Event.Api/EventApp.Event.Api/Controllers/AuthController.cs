@@ -13,12 +13,14 @@ namespace EventApp.Api.Controllers {
     public class AuthController : ControllerBase {
 
         private readonly IAuthService _authService;
+        private readonly IUserService _userService;
         private readonly ITokenService _tokenService;
         
-        public AuthController (IAuthService authService, ITokenService tokenService) {
+        public AuthController (IAuthService authService, ITokenService tokenService, IUserService userService) {
 
             _authService = authService;
             _tokenService = tokenService;
+            _userService = userService;
 
         }
 
@@ -53,20 +55,20 @@ namespace EventApp.Api.Controllers {
 
         }
 
-        [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] string refreshToken) {
+        [HttpGet("refresh/{refreshToken}")]
+        public async Task<IActionResult> Refresh(string refreshToken) {
 
             try {
 
                 var principal = _tokenService.ValidateRefreshToken(refreshToken);
-                var userId = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+                var userId = Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
 
                 if (userId == null) {
                     return Unauthorized("Invalid refresh token: User ID not found.");
                 }
 
-                var user = new UserFullResponseModel();
-                user.Id = Guid.Parse(userId);
+                var user = await _userService.GetUserByIdAsync(userId);
+
 
                 var newToken = _tokenService.GenerateTokens(user);
 
