@@ -17,7 +17,9 @@ builder.Services
     .AddApplicationServices()
     .AddApplicationFluentValidation();
 
-builder.Services.AddApplicationJwtAuthentificate(builder.Configuration);
+builder.Services.AddApplicationJwtAuthentication(builder.Configuration);
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
@@ -29,10 +31,15 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
     app.MapScalarApiReference();
-    app.UseExceptionHandler("/errors");
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
+
+app.UseRouting();
+
+app.UseAuthentication(); 
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 

@@ -14,6 +14,8 @@ namespace EventApp.Api.Core.Services {
 
         private readonly IConfiguration _configuration;
         private readonly SymmetricSecurityKey _securityKey;
+        private readonly string _issuer; 
+        private readonly string _audience;
         private readonly double _accessTokenLifetimeMinutes;
         private readonly double _refreshTokenLifetimeDays;
 
@@ -23,7 +25,9 @@ namespace EventApp.Api.Core.Services {
             var jwtSettings = _configuration.GetSection("Jwt");
 
             var secretKey = jwtSettings["Key"];
-           
+            _issuer = jwtSettings["Issuer"] ?? throw new ArgumentNullException("Jwt:Issuer"); 
+            _audience = jwtSettings["Audience"] ?? throw new ArgumentNullException("Jwt:Audience"); 
+
             if (!double.TryParse(jwtSettings["AccessTokenLifetimeMinutes"], out _accessTokenLifetimeMinutes)) {
                 _accessTokenLifetimeMinutes = 15; 
             }
@@ -38,7 +42,7 @@ namespace EventApp.Api.Core.Services {
         public TokensResponse GenerateTokens(UserFullResponseModel user) {
 
             var accessToken = GenerateAccessToken(user);
-            var refreshToken = GenerateRefreshToken(user); 
+            var refreshToken = GenerateRefreshToken(user.Id); 
 
             return new TokensResponse(accessToken, refreshToken);
 
@@ -50,32 +54,38 @@ namespace EventApp.Api.Core.Services {
 
             var claims = new List<Claim>
             {
-                new Claim("userId", user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Name, user.FirstName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
             var token = new JwtSecurityToken(
+                issuer: _issuer,      
+                audience: _audience,   
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_accessTokenLifetimeMinutes), 
+                expires: DateTime.UtcNow.AddMinutes(_accessTokenLifetimeMinutes),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
 
         }
 
-        private string GenerateRefreshToken(UserFullResponseModel user) {
+        private string GenerateRefreshToken(Guid userId) {
 
             var credentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new List<Claim>
             {
-                new Claim("userId", user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(_refreshTokenLifetimeDays), 
-                signingCredentials: credentials);
-           
+                 issuer: _issuer,     
+                 audience: _audience,
+                 claims: claims,
+                 expires: DateTime.UtcNow.AddDays(_refreshTokenLifetimeDays),
+                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
@@ -87,19 +97,27 @@ namespace EventApp.Api.Core.Services {
             try {
 
                 var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters {
+
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = _securityKey,
-                    ValidateLifetime = true, 
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
 
+                    ValidateIssuer = true,         
+                    ValidIssuer = _issuer,        
+
+                    ValidateAudience = true,      
+                    ValidAudience = _audience,     
+
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+
+                }, out SecurityToken validatedToken);
 
                 return principal;
 
             } catch (Exception ex) {
 
                 throw new SecurityTokenException("Invalid refresh token", ex);
-
+            
             }
         }
 
