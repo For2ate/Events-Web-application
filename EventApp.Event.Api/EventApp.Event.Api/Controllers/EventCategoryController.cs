@@ -1,12 +1,13 @@
 ﻿using EventApp.Api.Core.Interfaces;
 using EventApp.Models.EventCategoryDTO.Request;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventApp.Api.Controllers {
 
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize] 
+    [Authorize] 
     public class EventCategoryController : ControllerBase {
 
         private readonly IEventCategoryService _categoryService;

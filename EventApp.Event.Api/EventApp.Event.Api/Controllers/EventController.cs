@@ -1,12 +1,14 @@
 ﻿using EventApp.Api.Core.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventApp.Api.Controllers {
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class EventController : ControllerBase {
 
         private readonly IEventService _eventService;

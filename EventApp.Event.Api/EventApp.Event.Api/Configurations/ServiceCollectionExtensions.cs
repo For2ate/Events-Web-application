@@ -2,10 +2,11 @@
 using EventApp.Api.Core.Services;
 using EventApp.Api.Core.Validation;
 using EventApp.Data.Interfaces;
-using EventApp.Data.MappingProfilies;
+using EventApp.Api.Core.MappingProfilies;
 using EventApp.Data.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using EventApp.Api.Core.Resolvers;
 
 namespace EventApp.Api.Configurations {
 
@@ -26,13 +27,18 @@ namespace EventApp.Api.Configurations {
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IEventCategoryService, EventCategoryService>();
+            services.AddScoped<IFileStorageService, FileStorageService>();
 
             return services;
         }
 
         public static IServiceCollection AddApplicationAutoMapper(this IServiceCollection services) {
 
+            services.AddScoped<ImageUrlResolver>();
+
             services.AddAutoMapper(typeof(UserMappingProfile));
+            services.AddAutoMapper(typeof(EventMappingProfile));
+            services.AddAutoMapper(typeof(EventCategoryMappingProfile));
 
             return services;
 

@@ -23,6 +23,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 
 var app = builder.Build();
@@ -40,12 +42,16 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseAuthentication(); 
 app.UseAuthorization();
 
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

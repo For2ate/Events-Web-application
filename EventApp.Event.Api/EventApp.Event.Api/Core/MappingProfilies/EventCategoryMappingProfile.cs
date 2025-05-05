@@ -3,7 +3,7 @@ using EventApp.Data.Entities;
 using EventApp.Models.EventCategoriyDTO.Response;
 using EventApp.Models.EventCategoryDTO.Request;
 
-namespace EventApp.Data.MappingProfilies {
+namespace EventApp.Api.Core.MappingProfilies {
 
     public class EventCategoryMappingProfile : Profile {
 

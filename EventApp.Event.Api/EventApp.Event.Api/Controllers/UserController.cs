@@ -6,6 +6,7 @@ namespace EventApp.Api.Controllers {
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase{
 
         private readonly IUserService _userService;
@@ -16,7 +17,6 @@ namespace EventApp.Api.Controllers {
 
         }
 
-        [Authorize]
         [HttpGet("User/{userId}")]
         public async Task<IActionResult> GetUserById(Guid userId) {
 

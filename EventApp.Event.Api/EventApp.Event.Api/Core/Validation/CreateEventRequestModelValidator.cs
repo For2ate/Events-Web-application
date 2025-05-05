@@ -21,10 +21,6 @@ namespace EventApp.Api.Core.Validation {
             RuleFor(x => x.MaxNumberOfParticipants)
                 .GreaterThan(0).WithMessage("Максимальное количество участников должно быть больше нуля.");
            
-            RuleFor(x => x.ImageUrl)
-                .Must(uri => string.IsNullOrWhiteSpace(uri) || Uri.TryCreate(uri, UriKind.Absolute, out _))
-                .When(x => !string.IsNullOrWhiteSpace(x.ImageUrl))
-                .WithMessage("URL изображения должен быть действительным абсолютным URL-адресом.");
 
             RuleFor(x => x.CategoryId)
                 .NotEmpty().WithMessage("Идентификатор категории обязателен.") 
