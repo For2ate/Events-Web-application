@@ -22,6 +22,7 @@ namespace EventApp.Api.Configurations {
 
             // Services
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITokenService, TokenService>();
 
             return services;
         }

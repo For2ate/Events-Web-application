@@ -17,6 +17,8 @@ builder.Services
     .AddApplicationServices()
     .AddApplicationFluentValidation();
 
+builder.Services.AddApplicationJwtAuthentificate(builder.Configuration);
+
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();

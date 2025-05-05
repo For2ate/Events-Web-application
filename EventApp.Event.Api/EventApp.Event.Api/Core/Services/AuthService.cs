@@ -38,6 +38,7 @@ namespace EventApp.Api.Core.Services {
                 var user = _userMapper.Map<UserEntity>(model);
 
                 user.Password = Hasher.HashPassword(user.Password);
+                user.BirthdayDate = model.BirthdayDate.ToUniversalTime();
 
                 await _userRepository.AddAsync(user);
 
