@@ -10,6 +10,8 @@
 
         public DateTime BirthdayDate { get; set; }
 
+        public string Password { get; set; }
+
 
         public virtual ICollection<EventRegistrationEntity> Registrations { get; set; } = new List<EventRegistrationEntity>();
 
