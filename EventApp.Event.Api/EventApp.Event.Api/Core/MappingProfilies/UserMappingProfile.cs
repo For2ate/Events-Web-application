@@ -3,7 +3,7 @@ using EventApp.Data.Entities;
 using EventApp.Models.UserDTO.Requests;
 using EventApp.Models.UserDTO.Responses;
 
-namespace EventApp.Data.MappingProfilies {
+namespace EventApp.Api.Core.MappingProfilies {
    
     public class UserMappingProfile : Profile
     {
