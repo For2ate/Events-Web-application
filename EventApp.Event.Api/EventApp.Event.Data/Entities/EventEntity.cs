@@ -9,10 +9,13 @@ namespace EventApp.Data.Entities {
 
         public DateTime DateOfEvent { get; set; }
 
+        public int CurrentNumberOfParticipants { get; set; }
+
         public int MaxNumberOfParticipants { get; set; }
 
         public string ImageUrl { get; set; }
 
+        public string Place { get; set; }
 
         public Guid CategoryId { get; set; }
         public virtual EventCategoryEntity Category { get; set; }

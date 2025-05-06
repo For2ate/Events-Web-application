@@ -123,6 +123,8 @@ namespace EventApp.Api.Core.Services {
         public async Task<EventFullResponseModel?> UpdateEventAsync(UpdateEventRequestModel model) 
         {
 
+            using var transaction = await _eventRepository.BeginTransactionAsync();
+
             try {
 
                 var existingEntity = await _eventRepository.GetByIdAsync(model.Id);
@@ -143,13 +145,19 @@ namespace EventApp.Api.Core.Services {
 
                 _eventMapper.Map(model, existingEntity);
 
+                existingEntity.Id = model.Id;
+
                 await _eventRepository.UpdateAsync(existingEntity);
 
                 var responseEntity = await _eventRepository.GetByIdAsync(model.Id);
 
+                await transaction.CommitAsync();
+
                 return _eventMapper.Map<EventFullResponseModel>(responseEntity);
 
                 } catch(Exception ex) {
+
+                await transaction.RollbackAsync();
 
                 _logger.LogError(ex, "error while update event {id}", model.Id);
 

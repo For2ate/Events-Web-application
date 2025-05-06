@@ -6,6 +6,8 @@
 
         public string Description { get; set; }
 
+        public string Place { get; set; }
+
         public DateTime DateOfEvent { get; set; }
 
         public int MaxNumberOfParticipants { get; set; }
