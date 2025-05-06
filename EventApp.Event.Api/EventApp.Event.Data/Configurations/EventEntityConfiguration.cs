@@ -27,6 +27,13 @@ namespace EventApp.Data.Configurations {
 
             builder.HasIndex(e => e.DateOfEvent);
 
+            builder.Property(e => e.Place)
+                .IsRequired();
+
+            builder.HasIndex(e => e.Place);
+
+            builder.Property(e => e.CurrentNumberOfParticipants);
+
             builder.Property(e => e.MaxNumberOfParticipants)
                 .IsRequired(); 
 

@@ -1,6 +1,6 @@
 ﻿namespace EventApp.Models.EventRegistrationDTO.Response {
 
-    public class EventRegistationFullResponseModel {
+    public class EventRegistrationFullResponseModel {
 
         public Guid Id { get; set; } 
 

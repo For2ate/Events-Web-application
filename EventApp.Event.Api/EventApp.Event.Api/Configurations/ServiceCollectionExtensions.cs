@@ -22,12 +22,13 @@ namespace EventApp.Api.Configurations {
             services.AddScoped<IEventRegistrationRepository, EventRegistationRepository>();
 
             // Services
-            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuthService, AuthService>(); 
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IEventCategoryService, EventCategoryService>();
             services.AddScoped<IFileStorageService, FileStorageService>();
+            services.AddScoped<IEventRegistrationService, EventRegistrationService>();
 
             return services;
         }
@@ -39,6 +40,7 @@ namespace EventApp.Api.Configurations {
             services.AddAutoMapper(typeof(UserMappingProfile));
             services.AddAutoMapper(typeof(EventMappingProfile));
             services.AddAutoMapper(typeof(EventCategoryMappingProfile));
+            services.AddAutoMapper(typeof(EventRegistationMappingProfile));
 
             return services;
 
