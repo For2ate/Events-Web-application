@@ -1,5 +1,6 @@
 ﻿using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
+using EventApp.Models.SharedDTO;
 
 namespace EventApp.Api.Core.Interfaces {
 
@@ -8,6 +9,8 @@ namespace EventApp.Api.Core.Interfaces {
         Task<EventFullResponseModel?> GetEventByIdAsync(Guid id);
 
         Task<IEnumerable<EventFullResponseModel>> GetAllEventsAsync();
+
+        Task<PagedListResponse<EventFullResponseModel>> GetFilteredEventsAsync(EventQueryParameters queryParameters);
 
         Task<EventFullResponseModel> GetEventByNameAsync(string name);
 

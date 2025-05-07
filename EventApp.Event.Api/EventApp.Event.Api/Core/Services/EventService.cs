@@ -6,6 +6,7 @@ using EventApp.Models.EventDTO.Response;
 using EventApp.Api.Exceptions;
 using EventApp.Models.UserDTO.Responses;
 using EventApp.Api.Core.Interfaces;
+using EventApp.Models.SharedDTO;
 
 namespace EventApp.Api.Core.Services {
 
@@ -65,6 +66,30 @@ namespace EventApp.Api.Core.Services {
 
                 throw;
 
+            }
+
+        }
+
+        public async Task<PagedListResponse<EventFullResponseModel>> GetFilteredEventsAsync(EventQueryParameters queryParameters) {
+
+            try {
+
+                var (eventEntities, totalCount) = await _eventRepository.GetFilteredEventsAsync(queryParameters);
+
+                var eventDtos = _eventMapper.Map<IEnumerable<EventFullResponseModel>>(eventEntities);
+
+                return new PagedListResponse<EventFullResponseModel>(
+                    eventDtos,
+                    queryParameters.PageNumber,
+                    queryParameters.PageSize,
+                    totalCount
+                );
+
+            } catch (Exception ex) {
+
+                _logger.LogError(ex, "Error while getting paginated/filtered events. Query: {@QueryParameters}", queryParameters);
+                throw; 
+            
             }
 
         }
