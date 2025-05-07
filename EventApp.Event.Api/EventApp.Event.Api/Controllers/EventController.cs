@@ -3,6 +3,7 @@ using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace EventApp.Api.Controllers {
 
@@ -26,6 +27,25 @@ namespace EventApp.Api.Controllers {
 
             return Ok(events);
         
+        }
+
+        [HttpGet("filtered")]
+        public async Task<IActionResult> GetEvents([FromQuery] EventQueryParameters queryParameters) {
+
+            var pagedResult = await _eventService.GetFilteredEventsAsync(queryParameters);
+
+            var paginationMetadata = new {
+                pagedResult.TotalCount,
+                pagedResult.PageSize,
+                pagedResult.PageNumber,
+                pagedResult.TotalPages,
+                pagedResult.HasNextPage,
+                pagedResult.HasPreviousPage
+            };
+            
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
+            return Ok(pagedResult.Items);
         }
 
         [HttpGet("{id}")]

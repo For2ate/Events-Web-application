@@ -226,7 +226,7 @@ namespace EventApp.Tests.UnitTests.RepositoryTests {
                                         .Without(e => e.Name) 
                                         .CreateMany(2).ToList();
             otherEntities.ForEach(e => {
-                e.Name = _fixture.Create<string>(); /
+                e.Name = _fixture.Create<string>(); 
                 if (e.CategoryId == Guid.Empty) e.CategoryId = _fixture.Create<Guid>();
             });
 
@@ -338,6 +338,12 @@ namespace EventApp.Tests.UnitTests.RepositoryTests {
             result.Should().BeNull();
 
         }
+
+        // =======================================================================
+        // Тесты для    GetEventByNameAsync
+        // =======================================================================
+
+
 
     }
 
