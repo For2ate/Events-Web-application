@@ -15,11 +15,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 
-namespace EventApp.Tests.UnitTests.ServiceTests
-{
-   
-    public class EventServiceTests
-    {
+namespace EventApp.Tests.UnitTests.ServiceTests {
+
+    public class EventServiceTests {
 
         private readonly IFixture _fixture;
         private readonly Mock<IEventRepository> _mockEventRepository;
@@ -37,7 +35,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             _mockEventRepository = _fixture.Freeze<Mock<IEventRepository>>();
             _mockEventCategoryRepository = _fixture.Freeze<Mock<IEventCategoryRepository>>();
             _mockMapper = _fixture.Freeze<Mock<IMapper>>();
-            _mockLogger = _fixture.Freeze<Mock<ILogger<EventService>>>(); 
+            _mockLogger = _fixture.Freeze<Mock<ILogger<EventService>>>();
 
             _sut = _fixture.Create<EventService>();
 
@@ -61,7 +59,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             // Arrange
             var eventEntity = _fixture.Build<EventEntity>()
                 .With(e => e.Id, eventId)
-                .Without(e => e.Category)    
+                .Without(e => e.Category)
                 .Without(e => e.Registrations)
                 .Create();
 
@@ -86,10 +84,10 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [Theory]
         [AutoData]
         public async Task GetEventByIdAsync_WhenEventDoesNotExist_ShouldReturnNull(Guid eventId) {
-            
+
             // Arrange
             _mockEventRepository.Setup(repo => repo.GetByIdAsync(eventId))
-                .ReturnsAsync((EventEntity?)null); 
+                .ReturnsAsync((EventEntity?)null);
 
             // Act
             var result = await _sut.GetEventByIdAsync(eventId);
@@ -98,16 +96,16 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             result.Should().BeNull();
             _mockEventRepository.Verify(repo => repo.GetByIdAsync(eventId), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(It.IsAny<EventEntity>()), Times.Never);
-        
+
         }
 
         [Theory]
         [AutoData]
         public async Task GetEventByIdAsync_WhenRepositoryThrowsException_ShouldLogAndRethrow(Guid eventId) {
-           
+
             // Arrange
             var exceptionMessage = "Database connection failed";
-            var repositoryException = new InvalidOperationException(exceptionMessage); 
+            var repositoryException = new InvalidOperationException(exceptionMessage);
 
             _mockEventRepository.Setup(repo => repo.GetByIdAsync(eventId))
                 .ThrowsAsync(repositoryException);
@@ -117,17 +115,17 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             // Assert
             await act.Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage(exceptionMessage); 
+                .WithMessage(exceptionMessage);
 
             _mockLogger.Verify(
                 logger => logger.Log(
-                    LogLevel.Error,                                 
-                    It.IsAny<EventId>(),                           
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) =>
-                        v.ToString().Contains($"Error while get event {eventId}") && 
-                        v.ToString().Contains(eventId.ToString())), 
-                    repositoryException,                            
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()), 
+                        v.ToString().Contains($"Error while get event {eventId}") &&
+                        v.ToString().Contains(eventId.ToString())),
+                    repositoryException,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);
 
         }
@@ -206,10 +204,10 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [Theory]
         [AutoData]
         public async Task GetEventByNameAsync_WhenEventExists_ShouldReturnMappedEvent(string eventName) {
-           
+
             // Arrange
             var eventEntity = _fixture.Build<EventEntity>()
-                                      .With(e => e.Name, eventName) 
+                                      .With(e => e.Name, eventName)
                                       .Create();
 
             var expectedResponse = _fixture.Create<EventFullResponseModel>();
@@ -227,13 +225,13 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             result.Should().BeEquivalentTo(expectedResponse);
             _mockEventRepository.Verify(repo => repo.GetEventByNameAsync(eventName), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(eventEntity), Times.Once);
-        
+
         }
 
         [Theory]
         [AutoData]
         public async Task GetEventByNameAsync_WhenEventDoesNotExist_ShouldThrowNotFoundException(string eventName) {
-            
+
             // Arrange
             _mockEventRepository.Setup(repo => repo.GetEventByNameAsync(eventName))
                 .ReturnsAsync((EventEntity?)null);
@@ -243,7 +241,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             // Assert
             await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Resource 'event' with identifier '{eventName}' not found."); 
+                .WithMessage($"Resource 'event' with identifier '{eventName}' not found.");
 
             _mockEventRepository.Verify(repo => repo.GetEventByNameAsync(eventName), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(It.IsAny<EventEntity>()), Times.Never);
@@ -252,7 +250,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [Theory]
         [AutoData]
         public async Task GetEventByNameAsync_WhenRepositoryThrowsOtherException_ShouldRethrow(string eventName) {
-            
+
             // Arrange
             var repositoryException = new InvalidOperationException("Database access error");
             _mockEventRepository.Setup(repo => repo.GetEventByNameAsync(eventName))
@@ -269,7 +267,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             _mockEventRepository.Verify(repo => repo.GetEventByNameAsync(eventName), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(It.IsAny<EventEntity>()), Times.Never);
-        
+
         }
 
         // =======================================================================
@@ -288,8 +286,8 @@ namespace EventApp.Tests.UnitTests.ServiceTests
                                          .Create();
 
             var eventEntityToCreate = _fixture.Build<EventEntity>()
-                                             .OmitAutoProperties() 
-                                             .With(e => e.Name, requestModel.Name) 
+                                             .OmitAutoProperties()
+                                             .With(e => e.Name, requestModel.Name)
                                              .With(e => e.Description, requestModel.Description)
                                              .With(e => e.DateOfEvent, requestModel.DateOfEvent)
                                              .With(e => e.MaxNumberOfParticipants, requestModel.MaxNumberOfParticipants)
@@ -303,11 +301,11 @@ namespace EventApp.Tests.UnitTests.ServiceTests
                 .ReturnsAsync(categoryEntity);
 
             _mockMapper.Setup(mapper => mapper.Map<EventEntity>(requestModel))
-                .Returns(eventEntityToCreate); 
+                .Returns(eventEntityToCreate);
 
             _mockEventRepository.Setup(repo => repo.AddAsync(It.Is<EventEntity>(e => e.Id != Guid.Empty && e.Name == requestModel.Name)))
-                .Returns(Task.CompletedTask) 
-                .Callback<EventEntity>(savedEntity => {});
+                .Returns(Task.CompletedTask)
+                .Callback<EventEntity>(savedEntity => { });
 
             _mockMapper.Setup(mapper => mapper.Map<EventFullResponseModel>(It.Is<EventEntity>(e => e.Name == requestModel.Name)))
                 .Returns(expectedResponse);
@@ -324,13 +322,13 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             _mockMapper.Verify(mapper => mapper.Map<EventEntity>(requestModel), Times.Once);
             _mockEventRepository.Verify(repo => repo.AddAsync(It.Is<EventEntity>(e => e.Id != Guid.Empty && e.Name == requestModel.Name)), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(It.Is<EventEntity>(e => e.Id != Guid.Empty && e.Name == requestModel.Name)), Times.Once);
-        
+
         }
 
         [Theory]
         [AutoData]
         public async Task CreateEventAsync_WhenCategoryDoesNotExist_ShouldThrowArgumentException(CreateEventRequestModel requestModel) {
-            
+
             // Arrange
             _mockEventCategoryRepository.Setup(repo => repo.GetByIdAsync(requestModel.CategoryId))
                 .ReturnsAsync((EventCategoryEntity?)null); // Категория не найдена
@@ -348,7 +346,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             _mockEventRepository.Verify(repo => repo.AddAsync(It.IsAny<EventEntity>()), Times.Never);
             _mockMapper.Verify(mapper => mapper.Map<EventEntity>(It.IsAny<CreateEventRequestModel>()), Times.Never);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(It.IsAny<EventEntity>()), Times.Never);
-        
+
         }
 
         [Theory]
@@ -364,7 +362,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
                                              .OmitAutoProperties()
                                              .With(e => e.Name, requestModel.Name)
                                              .With(e => e.CategoryId, requestModel.CategoryId)
-                                             .Create(); 
+                                             .Create();
 
             var repositoryException = new InvalidOperationException("Failed to save event to database");
 
@@ -374,7 +372,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             _mockMapper.Setup(mapper => mapper.Map<EventEntity>(requestModel))
                 .Returns(eventEntityToSave);
 
-            _mockEventRepository.Setup(repo => repo.AddAsync(It.Is<EventEntity>(e => e.Name == requestModel.Name))) 
+            _mockEventRepository.Setup(repo => repo.AddAsync(It.Is<EventEntity>(e => e.Name == requestModel.Name)))
                 .ThrowsAsync(repositoryException);
 
             // Act
@@ -382,7 +380,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             // Assert
             var thrownException = ( await act.Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("Failed to save event to database") ).Which; 
+                .WithMessage("Failed to save event to database") ).Which;
 
             thrownException.Should().BeSameAs(repositoryException);
 
@@ -390,7 +388,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             _mockMapper.Verify(mapper => mapper.Map<EventEntity>(requestModel), Times.Once);
             _mockEventRepository.Verify(repo => repo.AddAsync(It.Is<EventEntity>(e => e.Id != Guid.Empty && e.Name == requestModel.Name)), Times.Once);
             _mockMapper.Verify(mapper => mapper.Map<EventFullResponseModel>(It.IsAny<EventEntity>()), Times.Never);
-        
+
         }
 
 
@@ -405,10 +403,10 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             // Arrange
             var existingEventEntity = _fixture.Build<EventEntity>()
                                               .With(e => e.Id, updateModel.Id)
-                                              .Create(); 
+                                              .Create();
 
             EventCategoryEntity? categoryEntity = null;
-            
+
             bool shouldCheckCategory = updateModel.CategoryId != Guid.Empty && updateModel.CategoryId != existingEventEntity.CategoryId;
             if (shouldCheckCategory) {
                 categoryEntity = _fixture.Build<EventCategoryEntity>()
@@ -499,14 +497,14 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [AutoData]
         public async Task UpdateEventAsync_WhenEventToUpdateNotFound_ShouldThrowNotFoundExceptionAndRollback(
     UpdateEventRequestModel updateModel) {
-            
+
             // Arrange
             var mockDbContextTransaction = _fixture.Create<Mock<IDbContextTransaction>>();
 
             _mockEventRepository.Setup(repo => repo.BeginTransactionAsync())
                 .ReturnsAsync(mockDbContextTransaction.Object);
             _mockEventRepository.Setup(repo => repo.GetByIdAsync(updateModel.Id))
-                .ReturnsAsync((EventEntity?)null); 
+                .ReturnsAsync((EventEntity?)null);
             mockDbContextTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
@@ -521,21 +519,21 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             mockDbContextTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
             mockDbContextTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
-            _mockEventRepository.Verify(repo => repo.UpdateAsync(It.IsAny<EventEntity>()), Times.Never); 
+            _mockEventRepository.Verify(repo => repo.UpdateAsync(It.IsAny<EventEntity>()), Times.Never);
         }
 
         [Theory]
         [AutoData]
         public async Task UpdateEventAsync_WhenNewCategoryNotFound_ShouldThrowNotFoundExceptionAndRollback(
     UpdateEventRequestModel updateModel) {
-            
+
             // Arrange
             var existingEventEntity = _fixture.Build<EventEntity>()
                                              .With(e => e.Id, updateModel.Id)
                                              .Create();
 
             updateModel.CategoryId = _fixture.Create<Guid>();
-            while (updateModel.CategoryId == Guid.Empty 
+            while (updateModel.CategoryId == Guid.Empty
                 || updateModel.CategoryId == existingEventEntity.CategoryId) {
                 updateModel.CategoryId = _fixture.Create<Guid>();
             }
@@ -564,7 +562,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             mockDbContextTransaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
             mockDbContextTransaction.Verify(t => t.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
             _mockEventRepository.Verify(repo => repo.UpdateAsync(It.IsAny<EventEntity>()), Times.Never);
-        
+
         }
 
         [Theory]
@@ -577,7 +575,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
                                               .Create();
 
             if (updateModel.CategoryId != Guid.Empty && updateModel.CategoryId != existingEventEntity.CategoryId) {
-                
+
                 var categoryEntity = _fixture.Build<EventCategoryEntity>()
                     .With(c => c.Id, updateModel.CategoryId)
                     .Create();
@@ -587,7 +585,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
                     .ReturnsAsync(categoryEntity);
 
             } else if (updateModel.CategoryId == Guid.Empty) {
-                updateModel.CategoryId = existingEventEntity.CategoryId; 
+                updateModel.CategoryId = existingEventEntity.CategoryId;
             }
 
             var repositoryException = new InvalidOperationException("Database update failed");
@@ -603,7 +601,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             _mockEventRepository
                 .Setup(repo => repo.UpdateAsync(It.Is<EventEntity>(e => e.Id == updateModel.Id)))
-                .ThrowsAsync(repositoryException); 
+                .ThrowsAsync(repositoryException);
 
             mockDbContextTransaction.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
@@ -618,16 +616,16 @@ namespace EventApp.Tests.UnitTests.ServiceTests
 
             mockDbContextTransaction
                 .Verify(
-                    t => t.RollbackAsync(It.IsAny<CancellationToken>()), 
+                    t => t.RollbackAsync(It.IsAny<CancellationToken>()),
                     Times.Once
                 );
 
             mockDbContextTransaction
                 .Verify(
-                    t => t.CommitAsync(It.IsAny<CancellationToken>()), 
+                    t => t.CommitAsync(It.IsAny<CancellationToken>()),
                     Times.Never
                 );
-            
+
             _mockMapper
                 .Verify(
                     mapper => mapper.Map<EventFullResponseModel>(It.IsAny<EventEntity>()),
@@ -643,14 +641,14 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [Theory]
         [AutoData]
         public async Task DeleteEventByIdAsync_WhenEventExists_ShouldCallRemoveRepository(Guid eventId) {
-            
+
             // Arrange
             var eventEntity = _fixture.Build<EventEntity>().With(e => e.Id, eventId).Create();
 
             _mockEventRepository.Setup(repo => repo.GetByIdAsync(eventId))
                 .ReturnsAsync(eventEntity);
             _mockEventRepository.Setup(repo => repo.RemoveAsync(eventEntity))
-                .Returns(Task.CompletedTask); 
+                .Returns(Task.CompletedTask);
 
             // Act
             await _sut.DeleteEventByIdAsync(eventId);
@@ -664,7 +662,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [Theory]
         [AutoData]
         public async Task DeleteEventByIdAsync_WhenEventNotFound_ShouldThrowNotFoundException(Guid eventId) {
-            
+
             // Arrange
             _mockEventRepository.Setup(repo => repo.GetByIdAsync(eventId))
                 .ReturnsAsync((EventEntity?)null);
@@ -685,7 +683,7 @@ namespace EventApp.Tests.UnitTests.ServiceTests
         [Theory]
         [AutoData]
         public async Task DeleteEventByIdAsync_WhenRepositoryRemoveAsyncThrowsException_ShouldRethrow(Guid eventId) {
-            
+
             // Arrange
             var eventEntity = _fixture.Build<EventEntity>().With(e => e.Id, eventId).Create();
             var repositoryException = new InvalidOperationException("Database delete failed");
@@ -707,6 +705,10 @@ namespace EventApp.Tests.UnitTests.ServiceTests
             _mockEventRepository.Verify(repo => repo.RemoveAsync(eventEntity), Times.Once);
 
         }
+
+        // =======================================================================
+        // Тесты для DeleteEventByIdAsync
+        // =======================================================================
 
     }
 
