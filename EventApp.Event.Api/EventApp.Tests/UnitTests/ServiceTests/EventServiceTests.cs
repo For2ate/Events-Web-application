@@ -707,8 +707,96 @@ namespace EventApp.Tests.UnitTests.ServiceTests {
         }
 
         // =======================================================================
-        // Тесты для DeleteEventByIdAsync
+        // Тесты для  GetFilteredEventsAsync
         // =======================================================================
+
+        [Theory]
+        [AutoData]
+        public async Task GetFilteredEventsAsync_WhenRepositoryReturnsData_ShouldReturnMappedPagedListResponse(
+    EventQueryParameters queryParameters) {
+            // Arrange
+            if (queryParameters.PageNumber <= 0) queryParameters.PageNumber = 1;
+            if (queryParameters.PageSize <= 0) queryParameters.PageSize = 5;
+
+            var eventEntities = _fixture.CreateMany<EventEntity>(queryParameters.PageSize).ToList();
+            var totalCountFromRepo = _fixture.Create<Generator<int>>().First(x => x >= eventEntities.Count); // Общее кол-во >= кол-ву на странице
+            var expectedDtos = _fixture.CreateMany<EventFullResponseModel>(queryParameters.PageSize).ToList();
+
+            _mockEventRepository.Setup(repo => repo.GetFilteredEventsAsync(queryParameters))
+                .ReturnsAsync((eventEntities, totalCountFromRepo));
+            _mockMapper.Setup(mapper => mapper.Map<IEnumerable<EventFullResponseModel>>(eventEntities))
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _sut.GetFilteredEventsAsync(queryParameters);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Items.Should().BeEquivalentTo(expectedDtos);
+            result.TotalCount.Should().Be(totalCountFromRepo);
+            result.PageNumber.Should().Be(queryParameters.PageNumber);
+            result.PageSize.Should().Be(queryParameters.PageSize);
+            result.TotalPages.Should().Be((int)Math.Ceiling(totalCountFromRepo / (double)queryParameters.PageSize));
+            _mockEventRepository.Verify(repo => repo.GetFilteredEventsAsync(queryParameters), Times.Once);
+            _mockMapper.Verify(mapper => mapper.Map<IEnumerable<EventFullResponseModel>>(eventEntities), Times.Once);
+       
+        }
+
+        [Theory]
+        [AutoData]
+        public async Task GetFilteredEventsAsync_WhenRepositoryReturnsEmpty_ShouldReturnEmptyPagedListResponse(
+    EventQueryParameters queryParameters) {
+
+            // Arrange
+            if (queryParameters.PageNumber <= 0) queryParameters.PageNumber = 1;
+            if (queryParameters.PageSize <= 0) queryParameters.PageSize = 5;
+
+            var emptyEventEntities = new List<EventEntity>();
+            var totalCountFromRepo = 0; 
+            var emptyExpectedDtos = new List<EventFullResponseModel>();
+
+            _mockEventRepository.Setup(repo => repo.GetFilteredEventsAsync(queryParameters))
+                .ReturnsAsync((emptyEventEntities, totalCountFromRepo));
+            _mockMapper.Setup(mapper => mapper.Map<IEnumerable<EventFullResponseModel>>(emptyEventEntities))
+                .Returns(emptyExpectedDtos);
+
+            // Act
+            var result = await _sut.GetFilteredEventsAsync(queryParameters);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Items.Should().BeEmpty();
+            result.TotalCount.Should().Be(0);
+            result.TotalPages.Should().Be(0);
+            result.PageNumber.Should().Be(queryParameters.PageNumber); 
+            result.PageSize.Should().Be(queryParameters.PageSize);  
+            _mockEventRepository.Verify(repo => repo.GetFilteredEventsAsync(queryParameters), Times.Once);
+            _mockMapper.Verify(mapper => mapper.Map<IEnumerable<EventFullResponseModel>>(emptyEventEntities), Times.Once);
+        
+        }
+
+        [Theory]
+        [AutoData]
+        public async Task GetFilteredEventsAsync_WhenRepositoryThrowsException_ShouldLogAndRethrow(
+    EventQueryParameters queryParameters) {
+            
+            // Arrange
+            var repositoryException = new InvalidOperationException("Database query failed");
+
+            _mockEventRepository.Setup(repo => repo.GetFilteredEventsAsync(queryParameters))
+                .ThrowsAsync(repositoryException);
+
+            // Act
+            Func<Task> act = async () => await _sut.GetFilteredEventsAsync(queryParameters);
+
+            // Assert
+            var thrownException = ( await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("Database query failed") ).Which;
+            thrownException.Should().BeSameAs(repositoryException);
+
+            _mockMapper.Verify(mapper => mapper.Map<IEnumerable<EventFullResponseModel>>(It.IsAny<IEnumerable<EventEntity>>()), Times.Never); // Маппер не должен вызваться
+        
+        }
 
     }
 

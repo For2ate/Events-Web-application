@@ -28,10 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="UnitTests\ControllerTests\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\EventApp.Event.Api\EventApp.Api.csproj" />
     <ProjectReference Include="..\EventApp.Event.Data\EventApp.Data.csproj" />
     <ProjectReference Include="..\EventApp.Models\EventApp.Models.csproj" />

@@ -30,7 +30,7 @@ namespace EventApp.Api.Controllers {
         }
 
         [HttpGet("filtered")]
-        public async Task<IActionResult> GetEvents([FromQuery] EventQueryParameters queryParameters) {
+        public async Task<IActionResult> GetFilteredEvents([FromQuery] EventQueryParameters queryParameters) {
 
             var pagedResult = await _eventService.GetFilteredEventsAsync(queryParameters);
 
