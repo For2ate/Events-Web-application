@@ -23,8 +23,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 EXPOSE 8080
-#EXPOSE 8081 
+EXPOSE 8081 
 
 # Точка входа
-#ENTRYPOINT ["sh", "-c", "echo '--- Files in /https ---' && ls -l /https/ && echo '--- Environment variables ---' && printenv && echo '--- Sleeping to keep container alive ---' && sleep infinity"]
 ENTRYPOINT ["dotnet", "EventApp.Api.dll"]

@@ -3,8 +3,6 @@ using EventApp.Api.Middleware;
 using EventApp.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,9 +29,21 @@ builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<Be
 
 var app = builder.Build();
 
-Console.WriteLine($"Cert path: {Environment.GetEnvironmentVariable("ASPNETCORE_KESTREL_CERTIFICATES_DEFAULT_PATH")}");
-Console.WriteLine($"Cert exists: {File.Exists(Environment.GetEnvironmentVariable("ASPNETCORE_KESTREL_CERTIFICATES_DEFAULT_PATH"))}");
-Console.WriteLine(app.Environment.IsDevelopment());
+try {
+    using (var scope = app.Services.CreateScope()) {
+       
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
+
+        await dbContext.Database.MigrateAsync();
+
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>(); 
+        logger.LogInformation("Database migrations applied successfully.");
+
+    }
+} catch (Exception ex) {
+    var logger = app.Services.GetRequiredService<ILogger<Program>>(); 
+    logger.LogError(ex, "An error occurred while migrating the database.");
+}
 
 
 if (app.Environment.IsDevelopment()) {
@@ -48,8 +58,7 @@ if (app.Environment.IsDevelopment()) {
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 
-
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 

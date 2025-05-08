@@ -1,4 +1,5 @@
 services:
+
   # Сервиc API
   api:
     build:
@@ -7,30 +8,29 @@ services:
     container_name: eventapp-api
     ports:
       - "5274:8080"  # Маппим HTTP порт контейнера (8080) на порт 5274 хоста
-      - "7026:8081"  # Маппим HTTPS порт контейнера (8081) на порт 7026 хоста (если используете HTTPS)
+      - "7026:8081"  # Маппим HTTPS порт контейнера (8081) на порт 7026 хоста
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development 
-      - ConnectionStrings__ApplicationDb=Host=db;Port=5432;Database=Event.Web.App;Username=postgres;Password=mysecretpassword 
+      - ConnectionStrings__ApplicationDb=${DB_CONNECTION_STRING}
       - Jwt__Key=${JWT_KEY} 
-      - ASPNETCORE_KESTREL_CERTIFICATES_DEFAULT_PASSWORD=pass
-      - ASPNETCORE_KESTREL_CERTIFICATES_DEFAULT_PATH=/https/aspnetapp.pfx
-      - ASPNETCORE_URLS=http://+:8080
-      - ASPNETCORE_HTTP_PORT=8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/EventApi.pfx
     volumes:
-      - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro 
+      - ~/.aspnet/https:/https:ro
     depends_on:
       - db
     networks:
       - eventapp-network
 
-    # Сервис базы данных PostgreSQL
+  # Сервис базы данных PostgreSQL
   db:
     image: postgres:15
     container_name: eventapp-postgres-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: Event.Web.App 
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
