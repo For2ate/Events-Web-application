@@ -94,7 +94,6 @@ These instructions assume the project will be run locally using Docker and Docke
         # Password for the PFX certificate (must match export command and docker-compose)
         CERT_PASSWORD=pass
         ```
-    *   **IMPORTANT:** Add the `.env` file to your `.gitignore` file to prevent committing secrets.
 
 4.  **Build and run the containers:**
     Open a terminal in the project's root folder (where `docker-compose.yml` is located) and run:
