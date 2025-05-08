@@ -1,131 +1,135 @@
-## Описание Проекта: EventApp API
+[Читать на русском](README_RU.md)
 
-**EventApp API** - это бэкэнд веб-приложения для управления событиями, разработанный на платформе **.NET 9**. Приложение предоставляет RESTful API для создания, просмотра, обновления и удаления событий, категорий событий, а также для регистрации пользователей на эти события.
+## Project Description: EventApp API
 
-**Основные возможности:**
+**EventApp API** is the backend for a web application designed for event management, built on the **.NET 9** platform. The application provides a  REST-like API for creating, viewing, updating, and deleting events, event categories, and handling user registrations for these events.
 
-*   **Управление Событиями:** CRUD операции для событий (название, описание, дата, место, макс. участников, изображение, категория).
-*   **Управление Категориями:** CRUD операции для категорий событий.
-*   **Регистрация Пользователей:** Регистрация/отмена регистрации пользователей на события с проверками (наличие мест, дата события, отсутствие дубликатов).
-*   **Получение Списков:** Возможность получения списка событий с фильтрацией (по дате, месту, категории) и пагинацией. Получение списка участников события.
-*   **Аутентификация:** Реализована JWT Bearer аутентификация для защиты эндпоинтов.
-*   **Загрузка Файлов:** Возможность загрузки изображений для событий (сохраняются локально в `wwwroot/images` с уникальными именами).
-*   **База Данных:** Используется PostgreSQL для хранения данных.
-*   **Миграции:** Используются миграции Entity Framework Core для управления схемой базы данных (с возможностью автоматического применения при старте для разработки).
+**Core Features:**
 
-**Технологический стек:**
+*   **Event Management:** CRUD operations for events (name, description, date, place, max participants, image, category).
+*   **Category Management:** CRUD operations for event categories.
+*   **User Registration:** User registration/cancellation for events with validation checks (available slots, event date, duplicate registrations).
+*   **List Retrieval:** Ability to retrieve a list of events with filtering (by date, place, category) and pagination. Retrieval of event participant lists.
+*   **Authentication:** REST-like API, JWT Bearer authentication is implemented to secure endpoints.
+*   **File Uploads:** Capability to upload images for events (stored locally in `wwwroot/images` with unique names).
+*   **Database:** Utilizes PostgreSQL for data storage.
+*   **Migrations:** Employs Entity Framework Core migrations for database schema management (with an option for auto-apply on startup during development).
 
-*   **Платформа:** .NET 9 / ASP.NET Core
+**Technology Stack:**
+
+*   **Platform:** .NET 9 / ASP.NET Core
 *   **ORM:** Entity Framework Core 9
-*   **База Данных:** PostgreSQL (с использованием драйвера `Npgsql.EntityFrameworkCore.PostgreSQL`)
-*   **API и Сервисы:** RESTful API, JWT Bearer аутентификация (`Microsoft.AspNetCore.Authentication.JwtBearer`), AutoMapper, FluentValidation
-*   **API Документация:** Scalar (OpenAPI/Swagger через `Microsoft.AspNetCore.OpenApi` и `Scalar.AspNetCore`)
-*   **Логирование:** Serilog (с выводом в консоль и файл)
-*   **Обработка файлов:** Локальное хранилище (`wwwroot`)
-*   **Контейнеризация:** Docker, Docker Compose
-*   **Тестирование:** xUnit, Moq, AutoFixture (с AutoMoq), FluentAssertions, EF Core InMemory Provider
+*   **Database:** PostgreSQL (using `Npgsql.EntityFrameworkCore.PostgreSQL` driver)
+*   **API & Services:** RESTful API, JWT Bearer Authentication (`Microsoft.AspNetCore.Authentication.JwtBearer`), AutoMapper, FluentValidation
+*   **API Documentation:** Scalar (OpenAPI/Swagger via `Microsoft.AspNetCore.OpenApi` and `Scalar.AspNetCore`)
+*   **Logging:** Serilog (with Console and File sinks)
+*   **File Handling:** Local Storage (`wwwroot`)
+*   **Containerization:** Docker, Docker Compose
+*   **Testing:** xUnit, Moq, AutoFixture (with AutoMoq), FluentAssertions, EF Core InMemory Provider, Coverlet (Code Coverage via `coverlet.collector`)
 
-**Архитектура (опционально):**
+**Architecture:**
 
-*   Использован Repository Pattern для доступа к данным, Service Layer для бизнес-логики, Controllers для обработки API запросов.
+*   The application utilizes the Repository Pattern for data access, a Service Layer for business logic, and Controllers for handling API requests.
 
 ---
 
-## Инструкции по Запуску Проекта (с использованием Docker Compose)
+## Project Setup and Running Instructions (using Docker Compose)
 
-Данные инструкции предполагают, что проект будет запущен локально с использованием Docker и Docker Compose.
+These instructions assume the project will be run locally using Docker and Docker Compose.
 
-**1. Предварительные требования:**
+**1. Prerequisites:**
 
-*   **Docker:** Установленный и запущенный Docker Desktop (Windows, macOS) или Docker Engine/Docker Compose (Linux). [Официальный сайт Docker](https://www.docker.com/products/docker-desktop/)
-*   **.NET SDK:** Установленный .NET SDK (версии 9 или основной версии проекта), необходим для работы с сертификатами (`dotnet dev-certs`). [Официальный сайт .NET](https://dotnet.microsoft.com/download)
-*   **Git:** Для клонирования репозитория.
+*   **Docker:** Docker Desktop (Windows, macOS) or Docker Engine/Docker Compose (Linux) installed and running. [Official Docker Website](https://www.docker.com/products/docker-desktop/)
+*   **.NET SDK:** .NET SDK (version 9 or the primary version used in the project) installed, required for certificate management (`dotnet dev-certs`). [Official .NET Website](https://dotnet.microsoft.com/download)
+*   **Git:** For cloning the repository.
 
-**2. Настройка и Запуск:**
+**2. Setup and Run:**
 
-1.  **Клонировать репозиторий:**
+1.  **Clone the repository:**
     ```bash
     git clone https://github.com/For2ate/Events-Web-application.git
     cd Events-Web-application
     ```
 
-2.  **Настройка HTTPS Сертификата Разработки:**
-    Docker-контейнер будет использовать HTTPS. Для локальной разработки необходимо создать, экспортировать и доверить сертификат:
+2.  **Configure HTTPS Development Certificate:**
+    The Docker container will serve HTTPS. For local development, you need to create, export, and trust the certificate:
 
-    *   **Экспортировать сертификат в PFX формат** (для Kestrel внутри контейнера):
+    *   **Export the certificate to PFX format** (for Kestrel inside the container):
         ```powershell
-        # В PowerShell (Windows) - убедитесь, что папка .aspnet\https существует
+        # In PowerShell (Windows) - ensure the .aspnet\https folder exists
         dotnet dev-certs https -ep $env:USERPROFILE\.aspnet\https\EventApi.pfx -p pass
         ```
         ```bash
-        # В Bash (Linux/macOS) - убедитесь, что папка ~/.aspnet/https существует
+        # In Bash (Linux/macOS) - ensure the ~/.aspnet/https folder exists
         dotnet dev-certs https -ep ${HOME}/.aspnet/https/EventApi.pfx -p pass
         ```
-        *   `-ep`: Путь для экспорта. Файл `EventApi.pfx` будет создан в стандартной папке ASP.NET Core для сертификатов в вашем домашнем каталоге.
-        *   `-p pass`: Устанавливает пароль `pass` для PFX файла (этот пароль используется в `docker-compose.yml`). **Имя файла (`EventApi.pfx`) и пароль (`pass`) должны точно совпадать** с теми, что указаны в переменных окружения `ASPNETCORE_Kestrel__Certificates__Default__Path` и `ASPNETCORE_Kestrel__Certificates__Default__Password` в `docker-compose.yml`.
+        *   `-ep`: Export path. The `EventApi.pfx` file will be created in the standard ASP.NET Core certificate folder in your home directory.
+        *   `-p pass`: Sets the password `pass` for the PFX file (this password is used in `docker-compose.yml`). **The filename (`EventApi.pfx`) and password (`pass`) must exactly match** those specified in the `ASPNETCORE_Kestrel__Certificates__Default__Path` and `ASPNETCORE_Kestrel__Certificates__Default__Password` environment variables in `docker-compose.yml`.
 
-    *   **Доверить сертификату на хост-машине** (чтобы браузер не выдавал предупреждений):
+    *   **Trust the certificate on the host machine** (so your browser doesn't show warnings):
         ```powershell
-        # В PowerShell или Командной строке Windows/Linux/macOS
+        # In PowerShell or Command Prompt/Terminal (Windows/Linux/macOS)
         dotnet dev-certs https --trust
         ```
-        (Может потребоваться подтверждение установки сертификата в системное хранилище доверенных сертификатов).
+        (You might need to confirm the certificate installation in the system's trusted store).
 
-3.  **Создать и настроить файл `.env`:**
-    *   В корневой папке проекта (рядом с `docker-compose.yml`) создайте файл `.env`.
-    *   Скопируйте в него следующее содержимое, **обязательно заменив `YourSuperSecretKeyHere...` на ваш реальный надежный JWT секретный ключ**:
+3.  **Create and configure the `.env` file:**
+    *   In the project's root folder (next to `docker-compose.yml`), create a file named `.env`.
+    *   Copy the following content into it, **making sure to replace `YourSuperSecretKeyHere...` with your actual strong JWT secret**:
 
         ```dotenv
-        # .env файл
+        # .env file
 
-        # Секреты для базы данных (можно оставить как есть, если пароль совпадает с docker-compose)
+        # Database Secrets (can be left as is if the password matches docker-compose)
         POSTGRES_USER=postgres
-        POSTGRES_PASSWORD=mysecretpassword # Убедитесь, что совпадает с паролем в docker-compose для сервиса db
+        POSTGRES_PASSWORD=mysecretpassword # Ensure this matches the db service password in docker-compose
         POSTGRES_DB=Event.Web.App
         DB_HOST=db
         DB_PORT=5432
         DB_CONNECTION_STRING=Host=${DB_HOST};Port=${DB_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 
-        # ВАЖНО: Установите ваш реальный JWT секретный ключ
+        # IMPORTANT: Set your real JWT secret key
         JWT_SECRET_KEY=YourSuperSecretKeyHereWhichIsVeryLongAndSecure123!@#
 
-        # Пароль от PFX сертификата (должен совпадать с командой экспорта и docker-compose)
+        # Password for the PFX certificate (must match export command and docker-compose)
         CERT_PASSWORD=pass
         ```
+    *   **IMPORTANT:** Add the `.env` file to your `.gitignore` file to prevent committing secrets.
 
-4.  **Собрать и запустить контейнеры:**
-    Откройте терминал в корневой папке проекта (где лежит `docker-compose.yml`) и выполните команду:
+4.  **Build and run the containers:**
+    Open a terminal in the project's root folder (where `docker-compose.yml` is located) and run:
     ```bash
     docker-compose up --build -d
     ```
-    *   `up`: Запускает сервисы, описанные в `docker-compose.yml`.
-    *   `--build`: Принудительно пересобирает образы перед запуском (важно после изменений в Dockerfile или коде).
-    *   `-d`: Запускает контейнеры в фоновом режиме (detached mode).
+    *   `up`: Starts the services defined in `docker-compose.yml`.
+    *   `--build`: Forces a rebuild of the images before starting (important after code or Dockerfile changes).
+    *   `-d`: Runs the containers in detached mode (in the background).
 
-**3. Доступ к Приложению:**
+    The first run might take some time as Docker downloads base images and builds your project.
 
-*   **API HTTP:** `http://localhost:5274` (порт 5274 на хосте сопоставлен с портом 8080 в контейнере)
-*   **API HTTPS:** `https://localhost:7026` (порт 7026 на хосте сопоставлен с портом 8081 в контейнере)
-*   **Документация API (Scalar UI):** Откройте `https://localhost:7026/scalar` в вашем браузере (рекомендуется использовать HTTPS). Вы также можете использовать `http://localhost:5274/scalar`.
-*   **База Данных (при необходимости):** PostgreSQL доступен на хосте по адресу `localhost:54399` (порт 54399 сопоставлен с портом 5432 в контейнере). Используйте пользователя `postgres` и пароль из вашего `.env` файла.
+**3. Accessing the Application:**
 
-**4. Остановка Приложения:**
+*   **API HTTP:** `http://localhost:5274` (Port 5274 on the host maps to 8080 in the container)
+*   **API HTTPS:** `https://localhost:7026` (Port 7026 on the host maps to 8081 in the container)
+*   **API Documentation (Scalar UI):** Open `https://localhost:7026/scalar` in your browser (HTTPS recommended). You can also use `http://localhost:5274/scalar`.
+*   **Database (if needed):** PostgreSQL is accessible on the host at `localhost:54399` (Port 54399 maps to 5432 in the container). Use the username `postgres` and the password from your `.env` file.
 
-Чтобы остановить и удалить контейнеры, выполните в терминале в той же папке:
+**4. Stopping the Application:**
 
-```bash
-docker-compose down
-```
+To stop and remove the containers, run the following command in the same terminal/folder:
 
-*   Эта команда остановит и удалит контейнеры, но **не удалит** volume с данными PostgreSQL (`postgres_data`).
-*   Если вы хотите удалить и volume с данными БД (например, для полного сброса), используйте:
+    ```bash
+    docker-compose down
+    ```
+
+   * This command stops and removes the containers but does not delete the PostgreSQL data volume (postgres_data).
+   * If you want to remove the database volume as well (e.g., for a complete reset), use:
+
     ```bash
     docker-compose down -v
     ```
 
----
+**Additional Notes:**
 
-**Дополнительные Заметки:**
-
-*   Убедитесь, что порты, указанные в `docker-compose.yml` (например, `5274`, `7026`, `54399`), не заняты другими приложениями на вашем компьютере.
-*   Проверьте логи контейнеров, если возникнут проблемы при запуске: `docker-compose logs api` или `docker-compose logs db`.
+* Ensure the ports specified in docker-compose.yml (e.g., 5274, 7026, 54399) are not already in use by other applications on your machine.
+* Check container logs if you encounter issues during startup: docker-compose logs api or docker-compose logs db.
