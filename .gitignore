@@ -187,7 +187,8 @@ dist/
 logs/
 logs/all-*
 *.log
-
+.env
+certs/
 
 # Local
 .DS_Store

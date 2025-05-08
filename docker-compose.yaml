@@ -1,0 +1,47 @@
+services:
+
+  # Сервиc API
+  api:
+    build:
+      context: . 
+      dockerfile: EventApp.Api\Dockerfile 
+    container_name: eventapp-api
+    ports:
+      - "5274:8080"  # Маппим HTTP порт контейнера (8080) на порт 5274 хоста
+      - "7026:8081"  # Маппим HTTPS порт контейнера (8081) на порт 7026 хоста
+    environment:
+      - ConnectionStrings__ApplicationDb=${DB_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY} 
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${CERT_PASSWORD}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/EventApi.pfx
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    depends_on:
+      - db
+    networks:
+      - eventapp-network
+
+  # Сервис базы данных PostgreSQL
+  db:
+    image: postgres:15
+    container_name: eventapp-postgres-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "54399:5432" 
+    networks:
+      - eventapp-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  eventapp-network: 
+    driver: bridge
