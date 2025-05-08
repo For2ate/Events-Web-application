@@ -116,17 +116,15 @@ These instructions assume the project will be run locally using Docker and Docke
 **4. Stopping the Application:**
 
 To stop and remove the containers, run the following command in the same terminal/folder:
+```bash
+docker-compose down
+```
 
-    ```bash
-    docker-compose down
-    ```
-
-   * This command stops and removes the containers but does not delete the PostgreSQL data volume (postgres_data).
-   * If you want to remove the database volume as well (e.g., for a complete reset), use:
-
-    ```bash
-    docker-compose down -v
-    ```
+*   This command stops and removes the containers but does not delete the PostgreSQL data volume (postgres_data).
+*   If you want to remove the database volume as well (e.g., for a complete reset), use:
+```bash
+docker-compose down -v
+```
 
 **Additional Notes:**
 
