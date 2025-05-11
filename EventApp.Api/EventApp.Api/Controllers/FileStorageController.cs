@@ -1,4 +1,5 @@
 ﻿using EventApp.Api.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,6 +7,7 @@ namespace EventApp.Api.Controllers {
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FileStorageController : ControllerBase {
 
         private readonly IFileStorageService _fileStorageService;
