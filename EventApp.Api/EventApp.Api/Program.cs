@@ -2,7 +2,9 @@ using EventApp.Api.Configurations;
 using EventApp.Api.Middleware;
 using EventApp.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,11 +23,34 @@ builder.Services.AddApplicationJwtAuthentication(builder.Configuration);
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => 
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
+//builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
+
+builder.Services.AddSwaggerGen(c => {
+    c.SwaggerDoc("v1", new() { Title = "EventApp API", Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new() {
+        Description = "JWT Authorization header using the Bearer scheme.",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer"
+    });
+
+    c.AddSecurityRequirement(new()
+    {
+        {
+            new() { Reference = new() { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            Array.Empty<string>()
+        }
+    });
+
+
+    
+});
 
 var app = builder.Build();
 
@@ -47,10 +72,12 @@ try {
 
 
 if (app.Environment.IsDevelopment()) {
-    app.MapOpenApi();
+    //app.MapOpenApi();
+    app.UseSwagger();
     app.MapScalarApiReference(options => {
 
         options.Theme = ScalarTheme.BluePlanet;
+        options.WithOpenApiRoutePattern("/swagger/v1/swagger.json");
 
     });
     app.UseDeveloperExceptionPage();
