@@ -37,7 +37,7 @@ namespace EventApp.Api.Core.Services {
 
                 var user = _userMapper.Map<UserEntity>(model);
 
-                user.Password = Hasher.HashPassword(user.Password);
+                user.PasswordHash = Hasher.HashPassword(user.PasswordHash);
                 user.BirthdayDate = model.BirthdayDate.ToUniversalTime();
 
                 await _userRepository.AddAsync(user);
@@ -63,7 +63,7 @@ namespace EventApp.Api.Core.Services {
                     throw new InvalidCredentialsException();
                 }
 
-                if (Hasher.HashPassword(model.Password) != existingUserByEmail.Password) {
+                if (Hasher.HashPassword(model.Password) != existingUserByEmail.PasswordHash) {
                     throw new InvalidCredentialsException();
                 }
 

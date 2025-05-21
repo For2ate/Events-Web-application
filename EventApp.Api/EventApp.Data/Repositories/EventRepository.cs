@@ -25,6 +25,8 @@ namespace EventApp.Data.Repositories {
 
             IQueryable<EventEntity> query = _dbSet.AsQueryable();
 
+            query = query.AsNoTracking();
+
             if (queryParameters.DateFrom.HasValue) {
                 query = query.Where(e => e.DateOfEvent >= queryParameters.DateFrom.Value);
             }

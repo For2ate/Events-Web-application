@@ -21,6 +21,8 @@ namespace EventApp.Data.Repositories {
 
             IQueryable<EventRegistrationEntity> query = _dbSet;
 
+            query = query.AsNoTracking();
+
             query = query.Where(r => r.EventId == eventId);
             query = query.Include(r => r.User);
 

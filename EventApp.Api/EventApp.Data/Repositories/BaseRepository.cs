@@ -16,12 +16,12 @@ namespace EventApp.Data.Repositories {
         }
 
         public async Task<TEntity> GetByIdAsync(Guid id) {
-            var entity = await _dbSet.FirstOrDefaultAsync(e => e.Id == id);
+            var entity = await _dbSet.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
             return entity;
         }
 
         public async Task<IEnumerable<TEntity>> GetAllAsync() {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.AsNoTracking().ToListAsync();
         }
 
         public async Task AddAsync(TEntity entity) {

@@ -13,7 +13,7 @@ namespace EventApp.Data.Repositories {
 
             try {
 
-                var user = await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+                var user = await _dbSet.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
 
                 return user;
 
