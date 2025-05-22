@@ -3,9 +3,12 @@ using EventApp.Core.Exceptions;
 using EventApp.Core.Interfaces;
 using EventApp.Data.Entities;
 using EventApp.Data.Interfaces;
+using EventApp.Models.EventCategoriyDTO.Request;
 using EventApp.Models.EventCategoriyDTO.Response;
 using EventApp.Models.EventCategoryDTO.Request;
+using EventApp.Models.SharedDTO;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace EventApp.Core.Services {
 
@@ -36,11 +39,49 @@ namespace EventApp.Core.Services {
             return _mapper.Map<EventCategoryFullResponseModel>(category);
         }
 
-        public async Task<IEnumerable<EventCategoryFullResponseModel>> GetAllCategoriesAsync() {
+        public async Task<PagedListResponse<EventCategoryFullResponseModel>> GetAllCategoriesAsync(
+            EventCategoryPagedQueryParametrs queryParameters
+            ) {
 
-            var categories = await _categoryRepository.GetAllAsync();
+            Expression<Func<EventCategoryEntity, bool>>? filterExpression = null;
 
-            return _mapper.Map<IEnumerable<EventCategoryFullResponseModel>>(categories);
+            if (!string.IsNullOrWhiteSpace(queryParameters.NameContains)) {
+                string searchTerm = queryParameters.NameContains.Trim().ToLowerInvariant();
+                filterExpression = category => category.Name.ToLowerInvariant().Contains(searchTerm);
+            }
+
+            Func<IQueryable<EventCategoryEntity>, IOrderedQueryable<EventCategoryEntity>>? orderByFunc = null;
+            bool isDescending = queryParameters.SortOrder == SortOrderEnum.desc;
+
+            switch (queryParameters.SortBy) {
+
+                case EventCategorySortByEnum.Name:
+                    orderByFunc = q => q.OrderBy(c => c.Name);
+                    break;
+
+                default: 
+                    orderByFunc = q => isDescending ? q.OrderByDescending(c => c.Name) : q.OrderBy(c => c.Name);
+                    break;
+
+            }
+
+            var categoriesEntities = await _categoryRepository.GetAllAsync(
+                filter: filterExpression,
+                orderBy: orderByFunc,
+                skip: ( queryParameters.PageNumber - 1 ) * queryParameters.PageSize,
+                take: queryParameters.PageSize
+            );
+
+            int count = await _categoryRepository.CountAsync(filterExpression);
+
+            var categories =  _mapper.Map<IEnumerable<EventCategoryFullResponseModel>>(categoriesEntities);
+
+            return new PagedListResponse<EventCategoryFullResponseModel>(
+                categories,
+                queryParameters.PageNumber,
+                queryParameters.PageSize,
+                count
+            );
 
         }
 

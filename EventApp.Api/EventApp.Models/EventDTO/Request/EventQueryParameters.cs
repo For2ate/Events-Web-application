@@ -24,9 +24,9 @@ namespace EventApp.Models.EventDTO.Request {
 
         public string? NameContains { get; set; }
 
-        public SortByEnum? SortBy { get; set; } = SortByEnum.date;
+        public EventSortByEnum? SortBy { get; set; } = EventSortByEnum.date;
 
-        public SortOrderEnum? SortOrder { get; set; } = SortOrderEnum.ask;
+        public SortOrderEnum? SortOrder { get; set; } = SortOrderEnum.asc;
 
     }
 

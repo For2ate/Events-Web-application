@@ -1,11 +1,13 @@
-﻿using EventApp.Models.EventCategoriyDTO.Response;
+﻿using EventApp.Models.EventCategoriyDTO.Request;
+using EventApp.Models.EventCategoriyDTO.Response;
 using EventApp.Models.EventCategoryDTO.Request;
+using EventApp.Models.SharedDTO;
 
 namespace EventApp.Core.Interfaces {
 
     public interface IEventCategoryService {
 
-        Task<IEnumerable<EventCategoryFullResponseModel>> GetAllCategoriesAsync();
+        Task<PagedListResponse<EventCategoryFullResponseModel>> GetAllCategoriesAsync(EventCategoryPagedQueryParametrs parametrs);
 
         Task<EventCategoryFullResponseModel?> GetCategoryByIdAsync(Guid id);
 

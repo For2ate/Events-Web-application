@@ -1,7 +1,10 @@
 ﻿using EventApp.Core.Interfaces;
+using EventApp.Models.EventCategoriyDTO.Request;
 using EventApp.Models.EventCategoryDTO.Request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
 
 namespace EventApp.Api.Controllers {
 
@@ -19,12 +22,23 @@ namespace EventApp.Api.Controllers {
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCategories() {
-            
-            var categories = await _categoryService.GetAllCategoriesAsync();
-            
-            return Ok(categories);
-        
+        public async Task<IActionResult> GetAllCategories([FromQuery] EventCategoryPagedQueryParametrs queryParameters) {
+
+            var pagedResult = await _categoryService.GetAllCategoriesAsync(queryParameters);
+
+            var paginationMetadata = new {
+                pagedResult.TotalCount,
+                pagedResult.PageSize,
+                pagedResult.PageNumber,
+                pagedResult.TotalPages,
+                pagedResult.HasNextPage,
+                pagedResult.HasPreviousPage
+            };
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
+            return Ok(pagedResult.Items);
+
         }
 
         [HttpGet("{id:guid}")]

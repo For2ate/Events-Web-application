@@ -10,8 +10,6 @@ namespace EventApp.Core.Interfaces {
 
         Task<IEnumerable<EventFullResponseModel>> GetAllEventsAsync();
 
-        Task<PagedListResponse<EventFullResponseModel>> GetFilteredEventsAsync(EventQueryParameters queryParameters);
-
         Task<EventFullResponseModel> GetEventByNameAsync(string name);
 
         Task<EventFullResponseModel> CreateEventAsync(CreateEventRequestModel model);

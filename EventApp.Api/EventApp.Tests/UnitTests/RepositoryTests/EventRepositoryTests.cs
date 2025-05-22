@@ -486,7 +486,7 @@ namespace EventApp.Tests.UnitTests.RepositoryTests {
             await SeedData(eventsToSort);
 
             var queryParameters = new EventQueryParameters {
-                SortBy = SortByEnum.name, // Используем enum
+                SortBy = SortByEnums.name, // Используем enum
                 SortOrder = SortOrderEnum.ask,
                 PageSize = 3
             };
@@ -540,7 +540,7 @@ namespace EventApp.Tests.UnitTests.RepositoryTests {
             await SeedData(eventsToSort);
 
             var queryParameters = new EventQueryParameters {
-                SortBy = SortByEnum.category,
+                SortBy = SortByEnums.category,
                 SortOrder = SortOrderEnum.desc,
                 PageSize = 6
             };

@@ -8,6 +8,7 @@ using EventApp.Models.EventDTO.Response;
 using EventApp.Models.SharedDTO;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
+using System.Linq.Expressions;
 
 namespace EventApp.Core.Services {
 
@@ -42,9 +43,14 @@ namespace EventApp.Core.Services {
 
         }
 
-        public async Task<IEnumerable<EventFullResponseModel>> GetAllEventsAsync() {
+        public async Task<IEnumerable<EventFullResponseModel>> GetAllEventsAsync(
+            EventQueryParameters queryParameters) {
 
             try {
+
+                Expression<Func<EventEntity, bool>>? filterExpression = null;
+
+
 
                 var events = await _eventRepository.GetAllAsync();
 
@@ -56,30 +62,6 @@ namespace EventApp.Core.Services {
 
                 throw new ArgumentException("No content");
 
-            }
-
-        }
-
-        public async Task<PagedListResponse<EventFullResponseModel>> GetFilteredEventsAsync(EventQueryParameters queryParameters) {
-
-            try {
-
-                var (eventEntities, totalCount) = await _eventRepository.GetFilteredEventsAsync(queryParameters);
-
-                var eventDtos = _eventMapper.Map<IEnumerable<EventFullResponseModel>>(eventEntities);
-
-                return new PagedListResponse<EventFullResponseModel>(
-                    eventDtos,
-                    queryParameters.PageNumber,
-                    queryParameters.PageSize,
-                    totalCount
-                );
-
-            } catch (Exception ex) {
-
-                _logger.LogError(ex, "Error while getting paginated/filtered events. Query: {@QueryParameters}", queryParameters);
-                throw; 
-            
             }
 
         }

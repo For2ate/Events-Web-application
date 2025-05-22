@@ -29,26 +29,6 @@ namespace EventApp.Api.Controllers {
         
         }
 
-        [HttpGet("filtered")]
-        public async Task<IActionResult> GetFilteredEvents([FromQuery] EventQueryParameters queryParameters) {
-
-            var pagedResult = await _eventService.GetFilteredEventsAsync(queryParameters);
-
-            var paginationMetadata = new {
-                pagedResult.TotalCount,
-                pagedResult.PageSize,
-                pagedResult.PageNumber,
-                pagedResult.TotalPages,
-                pagedResult.HasNextPage,
-                pagedResult.HasPreviousPage
-            };
-            
-            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
-
-            return Ok(pagedResult.Items);
-
-        }
-
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEventById(Guid id) {
 

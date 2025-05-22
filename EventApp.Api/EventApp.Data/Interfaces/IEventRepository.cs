@@ -7,8 +7,6 @@ namespace EventApp.Data.Interfaces {
 
         Task<EventEntity> GetEventByNameAsync(string name);
 
-        Task<(IEnumerable<EventEntity> Events, int TotalCount)> GetFilteredEventsAsync(EventQueryParameters queryParameters);
-
     }
 
 }
