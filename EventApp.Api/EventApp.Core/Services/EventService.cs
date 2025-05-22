@@ -6,6 +6,7 @@ using EventApp.Data.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
 using EventApp.Models.SharedDTO;
+using Microsoft.Extensions.Logging;
 
 namespace EventApp.Core.Services {
 

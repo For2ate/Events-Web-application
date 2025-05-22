@@ -2,6 +2,7 @@
 using EventApp.Core.Interfaces;
 using EventApp.Data.Interfaces;
 using EventApp.Models.UserDTO.Responses;
+using Microsoft.Extensions.Logging;
 
 namespace EventApp.Core.Services {
     

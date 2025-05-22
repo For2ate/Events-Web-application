@@ -1,6 +1,7 @@
 ﻿using EventApp.Core.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace EventApp.Core.Services {
 

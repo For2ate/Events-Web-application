@@ -4,6 +4,7 @@ using EventApp.Data.Entities;
 using EventApp.Data.Interfaces;
 using EventApp.Models.EventRegistrationDTO.Request;
 using EventApp.Models.EventRegistrationDTO.Response;
+using Microsoft.Extensions.Logging;
 
 namespace EventApp.Core.Services {
 
