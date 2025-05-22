@@ -2,6 +2,7 @@
 using EventApp.Core.Interfaces;
 using EventApp.Data.Interfaces;
 using EventApp.Models.UserDTO.Responses;
+using EventApp.Core.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace EventApp.Core.Services {
@@ -25,6 +26,12 @@ namespace EventApp.Core.Services {
             try {
 
                 var user = await _userRepository.GetByIdAsync(userId);
+
+                if (user == null) {
+
+                    throw new NotFoundException("userid", userId);
+
+                }
 
                 return _userMapper.Map<UserFullResponseModel>(user);
 

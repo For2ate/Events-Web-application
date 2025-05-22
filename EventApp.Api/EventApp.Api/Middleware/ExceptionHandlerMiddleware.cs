@@ -47,9 +47,40 @@ namespace EventApp.Api.Middleware {
                     responsePayload = new ErrorResponse(statusCode, "HTTP Error 401 – Ошибка авторизации.");
                     break;
 
-                default: 
-                    statusCode = HttpStatusCode.InternalServerError; 
-                    responsePayload = new ErrorResponse(statusCode, "Произошла внутренняя ошибка сервера. Пожалуйста, попробуйте позже.");
+                case NotFoundException notFoundException: 
+                    statusCode = HttpStatusCode.NotFound;
+                    responsePayload = new ErrorResponse((int)statusCode, "Ресурс не найден", exception.Message);
+                    break;
+
+                case BadRequestException badRequestException:
+                    statusCode = HttpStatusCode.BadRequest;
+                    responsePayload = new ErrorResponse((int)statusCode, "Некорректный запрос", badRequestException.Message);
+                    break;
+
+                case FluentValidation.ValidationException validationException:
+                    statusCode = HttpStatusCode.BadRequest;
+                    var errors = string.Join("; ", validationException.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+                    responsePayload = new ErrorResponse((int)statusCode, "Ошибка валидации", errors);
+                    break;
+
+                case ConflictException conflictException: 
+                    statusCode = HttpStatusCode.Conflict;
+                    responsePayload = new ErrorResponse((int)statusCode, "Конфликт операции", conflictException.Message);
+                    break;
+
+                case UnauthorizedAccessException unauthorizedException:
+                    statusCode = HttpStatusCode.Unauthorized;
+                    responsePayload = new ErrorResponse((int)statusCode, "Доступ запрещен", unauthorizedException.Message);
+                    break;
+
+                case OperationFailedException operationFailedException:
+                    statusCode = HttpStatusCode.InternalServerError;
+                    responsePayload = new ErrorResponse((int)statusCode, "Ошибка выполнения операции", "Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте позже.");         
+                    break;
+
+                default:
+                    statusCode = HttpStatusCode.InternalServerError;
+                    responsePayload = new ErrorResponse((int)statusCode, "Произошла внутренняя ошибка сервера.", "Пожалуйста, попробуйте позже.");
                     break;
 
             }

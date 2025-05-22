@@ -26,25 +26,13 @@ namespace EventApp.Api.Controllers {
                 return BadRequest("No file uploaded or file is empty.");
             }
 
-            try {
+            var imageUrl = await _fileStorageService.SaveFileAsync(file);
 
-                var imageUrl = await _fileStorageService.SaveFileAsync(file);
-
-                if (imageUrl == null) {
-                    return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred while saving the image.");
-                }
-
-                return Ok(imageUrl);
-
-            } catch (ArgumentException ex) {
-
-                return BadRequest(ex.Message);
-            
-            } catch (Exception ex) {
-     
-                return StatusCode(StatusCodes.Status500InternalServerError, "An internal server error occurred while uploading the file.");
-            
+            if (imageUrl == null) {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred while saving the image.");
             }
+
+            return Ok(imageUrl);
 
         }
 

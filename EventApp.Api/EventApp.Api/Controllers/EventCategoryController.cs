@@ -31,10 +31,6 @@ namespace EventApp.Api.Controllers {
         public async Task<IActionResult> GetCategoryById(Guid id) {
            
             var category = await _categoryService.GetCategoryByIdAsync(id);
-           
-            if (category == null) {
-                return NotFound($"Category with ID {id} not found.");
-            }
             
             return Ok(category);
         
@@ -42,65 +38,28 @@ namespace EventApp.Api.Controllers {
 
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromBody] CreateEventCategoryRequestModel model) {
-            
-            try {
-                
-                var createdCategory = await _categoryService.CreateCategoryAsync(model);
-                
-                return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
-           
-            } catch (ArgumentException ex) {
-                
-                return BadRequest(ex.Message);
-            
-            }
+
+            var createdCategory = await _categoryService.CreateCategoryAsync(model);
+
+            return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
+
         }
 
         [HttpPut]
         public async Task<IActionResult> UpdateCategory([FromBody] UpdateEventCategoryRequestModel model) {
-           
-            if (model.Id == Guid.Empty) {
-                return BadRequest("Category ID is required for update.");
-            }
 
-            try {
-                
-                var updatedCategory = await _categoryService.UpdateCategoryAsync(model);
-                
-                if (updatedCategory == null) {
-                    
-                    return NotFound($"Category with ID {model.Id} not found for update.");
-                
-                }
+            var updatedCategory = await _categoryService.UpdateCategoryAsync(model);
 
-                return Ok(updatedCategory);
-
-            } catch (ArgumentException ex) {
-
-                return BadRequest(ex.Message);
-
-            }
+            return Ok(updatedCategory);
 
         }
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteCategory(Guid id) {
-            
-            try {
-                
-                var success = await _categoryService.DeleteCategoryAsync(id);
-                
-                if (!success) {
-                    return NotFound($"Category with ID {id} not found.");
-                }
-            
-                return NoContent();
-            
-            } catch (InvalidOperationException ex) {
-         
-                return BadRequest(ex.Message);
-            
-            }
+
+            await _categoryService.DeleteCategoryAsync(id);
+
+            return NoContent();
 
         }
 

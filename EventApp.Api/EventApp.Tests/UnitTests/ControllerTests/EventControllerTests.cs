@@ -2,7 +2,7 @@
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using EventApp.Api.Controllers;
-using EventApp.Api.Core.Interfaces;
+using EventApp.Core.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
 using EventApp.Models.SharedDTO;

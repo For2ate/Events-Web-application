@@ -6,6 +6,7 @@ using EventApp.Data.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
 using EventApp.Models.SharedDTO;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
 
 namespace EventApp.Core.Services {
@@ -28,27 +29,16 @@ namespace EventApp.Core.Services {
 
         }
 
-        public async Task<EventFullResponseModel?> GetEventByIdAsync(Guid id) {
+        public async Task<EventFullResponseModel> GetEventByIdAsync(Guid id) {
 
-            try {
+            var eventEntity = await _eventRepository.GetByIdAsync(id);
 
-                var eventEntity = await _eventRepository.GetByIdAsync(id);
-
-                if (eventEntity == null) {
-                    return null;
-                }
-
-                var responseDto = _eventMapper.Map<EventFullResponseModel>(eventEntity);
-
-                return responseDto;
-
-            } catch (Exception ex) {
-
-                _logger.LogError(ex, "Error while get event {id}", id);
-
-                throw;
-
+            if (eventEntity == null) {
+                _logger.LogWarning("Event with ID {EventId} not found.", id);
+                throw new NotFoundException("Event", id.ToString());
             }
+
+            return _eventMapper.Map<EventFullResponseModel>(eventEntity);
 
         }
 
@@ -64,7 +54,7 @@ namespace EventApp.Core.Services {
 
                 _logger.LogError(ex, "Error while get all events");
 
-                throw;
+                throw new ArgumentException("No content");
 
             }
 
@@ -111,8 +101,7 @@ namespace EventApp.Core.Services {
 
                 throw;
 
-            }
-             
+            } 
 
         }
 
@@ -165,7 +154,11 @@ namespace EventApp.Core.Services {
                     if (category == null) {
                         throw new NotFoundException("Category", model.CategoryId);
                     }
-                
+
+                } else {
+
+                    throw new BadRequestException("Ids is required");
+
                 }
 
                 _eventMapper.Map(model, existingEntity);
@@ -180,7 +173,7 @@ namespace EventApp.Core.Services {
 
                 return _eventMapper.Map<EventFullResponseModel>(responseEntity);
 
-                } catch(Exception ex) {
+            } catch (Exception ex) {
 
                 await transaction.RollbackAsync();
 

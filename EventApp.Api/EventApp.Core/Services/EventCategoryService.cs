@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using EventApp.Core.Exceptions;
 using EventApp.Core.Interfaces;
 using EventApp.Data.Entities;
 using EventApp.Data.Interfaces;
 using EventApp.Models.EventCategoriyDTO.Response;
 using EventApp.Models.EventCategoryDTO.Request;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventApp.Core.Services {
 
@@ -21,10 +23,16 @@ namespace EventApp.Core.Services {
 
         public async Task<EventCategoryFullResponseModel?> GetCategoryByIdAsync(Guid id) {
 
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null) {
-                return null;
+            if (id == Guid.Empty) {
+                throw new ArgumentException("Id is required");
             }
+
+            var category = await _categoryRepository.GetByIdAsync(id);
+
+            if (category == null) {
+                throw new NotFoundException("category", id);
+            }
+
             return _mapper.Map<EventCategoryFullResponseModel>(category);
         }
 
@@ -41,18 +49,37 @@ namespace EventApp.Core.Services {
             var categoryEntity = _mapper.Map<EventCategoryEntity>(model);
             categoryEntity.Id = Guid.NewGuid();
 
-            await _categoryRepository.AddAsync(categoryEntity);
+            try {
 
-            var createdEntity = await _categoryRepository.GetByIdAsync(categoryEntity.Id);
+                await _categoryRepository.AddAsync(categoryEntity);
 
-            return _mapper.Map<EventCategoryFullResponseModel>(createdEntity);
+                var createdEntity = await _categoryRepository.GetByIdAsync(categoryEntity.Id);
+
+                return _mapper.Map<EventCategoryFullResponseModel>(createdEntity);
+
+            } catch (DbUpdateException ex) {
+
+                if (ex.InnerException != null) {
+                    throw new ConflictException($"Category with name '{categoryEntity.Name}' already exists.");
+                }
+
+                throw new OperationFailedException("Failed to create category due to a database error.", ex);
+            
+            } catch (Exception ex) {
+                throw new OperationFailedException("An unexpected error occurred while creating the category.", ex);
+            }
+
         }
 
         public async Task<EventCategoryFullResponseModel?> UpdateCategoryAsync(UpdateEventCategoryRequestModel model) {
             
+            if (model.Id == Guid.Empty) {
+                throw new ArgumentException("Id is required");
+            }
+
             var existingCategory = await _categoryRepository.GetByIdAsync(model.Id);
             if (existingCategory == null) {
-                return null; 
+                throw new NotFoundException("category", model);
             }
 
             _mapper.Map(model, existingCategory);
@@ -60,22 +87,29 @@ namespace EventApp.Core.Services {
             await _categoryRepository.UpdateAsync(existingCategory);
 
             return _mapper.Map<EventCategoryFullResponseModel>(existingCategory);
+
         }
 
-        public async Task<bool> DeleteCategoryAsync(Guid id) {
+        public async Task DeleteCategoryAsync(Guid id) {
 
             var categoryToDelete = await _categoryRepository.GetByIdAsync(id);
             if (categoryToDelete == null) {
-                return false; 
+                throw new NotFoundException("category", id);
             }
-
 
             if (categoryToDelete.Events != null && categoryToDelete.Events.Any()) {
-              throw new InvalidOperationException($"Cannot delete category '{categoryToDelete.Name}' (ID: {id}) because it has associated events.");
+                throw new InvalidOperationException($"Cannot delete category '{categoryToDelete.Name}' (ID: {id}) because it has associated events.");
             }
 
-            await _categoryRepository.RemoveAsync(categoryToDelete); 
-            return true;
+            try {
+         
+                await _categoryRepository.RemoveAsync(categoryToDelete);
+            
+            } catch (Exception ex) {
+            
+                throw new OperationFailedException("An unexpected error occurred while deleting the category.", ex);
+            
+            }
 
         }
         

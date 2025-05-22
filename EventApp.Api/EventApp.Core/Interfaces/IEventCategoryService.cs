@@ -13,7 +13,7 @@ namespace EventApp.Core.Interfaces {
 
         Task<EventCategoryFullResponseModel?> UpdateCategoryAsync(UpdateEventCategoryRequestModel model);
     
-        Task<bool> DeleteCategoryAsync(Guid id);
+        Task DeleteCategoryAsync(Guid id);
 
     }
 

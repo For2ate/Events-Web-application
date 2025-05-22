@@ -2,8 +2,8 @@
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using AutoMapper;
-using EventApp.Api.Core.Services;
-using EventApp.Api.Exceptions;
+using EventApp.Core.Services;
+using EventApp.Core.Exceptions;
 using EventApp.Data.Entities;
 using EventApp.Data.Interfaces;
 using EventApp.Models.EventDTO.Request;

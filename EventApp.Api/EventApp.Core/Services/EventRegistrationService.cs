@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using EventApp.Core.Exceptions;
 using EventApp.Core.Interfaces;
 using EventApp.Data.Entities;
 using EventApp.Data.Interfaces;
@@ -29,12 +30,17 @@ namespace EventApp.Core.Services {
             _eventRepository = eventRepository;
         }
 
-        public async Task<EventRegistrationFullResponseModel?> GetRegistrationByIdAsync(Guid registrationId) {
+        public async Task<EventRegistrationFullResponseModel> GetRegistrationByIdAsync(Guid registrationId) {
+
             var registration = await _eventRegistrationRepository.GetByIdAsync(registrationId);
+
             if (registration == null) {
-                return null;
+                _logger.LogWarning("Registration with ID {RegistrationId} not found.", registrationId);
+                throw new NotFoundException("EventRegistration", registrationId.ToString());
             }
+
             return _mapper.Map<EventRegistrationFullResponseModel>(registration);
+
         }
 
         public async Task<IEnumerable<ParticipantResponseModel>> GetParticipantsAsync(Guid eventId) {
@@ -43,7 +49,7 @@ namespace EventApp.Core.Services {
 
                 var eventExists = await _eventRepository.GetByIdAsync(eventId);
                 if (eventExists == null) {
-                    throw new KeyNotFoundException($"Event with ID {eventId} not found.");
+                    throw new NotFoundException("Event", eventId.ToString());
                 }
 
                 var participants = await _eventRegistrationRepository.GetParticipantsAsync(eventId);
@@ -69,25 +75,25 @@ namespace EventApp.Core.Services {
 
                 var userExists = await _userRepository.GetByIdAsync(userId);
                 if (userExists == null) {
-                    throw new ArgumentException($"User with ID {userId} not found.", nameof(userId));
+                    throw new NotFoundException($"User with ID {userId} not found.", nameof(userId));
                 }
 
                 var eventEntity = await _eventRepository.GetByIdAsync(model.EventId); 
                 if (eventEntity == null) {
-                    throw new ArgumentException($"Event with ID {model.EventId} not found.", nameof(model.EventId));
+                    throw new NotFoundException($"Event with ID {model.EventId} not found.", nameof(model.EventId));
                 }
 
                 if (eventEntity.DateOfEvent < DateTime.UtcNow) {
-                    throw new InvalidOperationException("Cannot register for an event that has already passed.");
+                    throw new ConflictException("Cannot register for an event that has already passed.");
                 }
 
                 if (eventEntity.CurrentNumberOfParticipants >= eventEntity.MaxNumberOfParticipants) {
-                    throw new InvalidOperationException($"Event '{eventEntity.Name}' is full. Maximum participants: {eventEntity.MaxNumberOfParticipants}.");
+                    throw new ConflictException($"Event '{eventEntity.Name}' is full. Maximum participants: {eventEntity.MaxNumberOfParticipants}.");
                 }
 
                 var alreadyRegistered = await _eventRegistrationRepository.ExistsRegistrationAsync(userId, model.EventId);
                 if (alreadyRegistered != null) {
-                    throw new InvalidOperationException($"User {userId} is already registered for event {model.EventId}.");
+                    throw new ConflictException($"User {userId} is already registered for event {model.EventId}.");
                 }
 
                 var registrationEntity = new EventRegistrationEntity {
@@ -140,11 +146,11 @@ namespace EventApp.Core.Services {
 
                 var eventEntity = await _eventRepository.GetByIdAsync(eventId);
                 if (eventEntity == null) {
-                    throw new ArgumentException($"Event with ID {eventId} not found.", nameof(eventId));
+                    throw new NotFoundException($"Event with ID {eventId} not found.", nameof(eventId));
                 }
 
                 if (eventEntity.DateOfEvent < DateTime.UtcNow) {
-                    throw new InvalidOperationException("Cannot cancel registration for an event that has already passed.");
+                    throw new ConflictException("Cannot cancel registration for an event that has already passed.");
                 }
 
                 await _eventRegistrationRepository.RemoveAsync(registration);

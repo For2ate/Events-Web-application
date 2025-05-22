@@ -21,7 +21,6 @@ namespace EventApp.Api.Controllers {
 
         }
 
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequestModel model) {
 
@@ -36,51 +35,34 @@ namespace EventApp.Api.Controllers {
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginRequestModel model) {
 
-            try {
 
-                var loginedUser = await _authService.Login(model);
+            var loginedUser = await _authService.Login(model);
 
-                var tokens = _tokenService.GenerateTokens(loginedUser);
+            var tokens = _tokenService.GenerateTokens(loginedUser);
 
-                return Ok(new { AccessToken = tokens.AccessToken, RefreshToken = tokens.RefreshToken });
-
-            } catch (Exception ex) {
-
-                throw;
-
-            }
+            return Ok(new { AccessToken = tokens.AccessToken, RefreshToken = tokens.RefreshToken });
 
         }
 
         [HttpGet("refresh/{refreshToken}")]
         public async Task<IActionResult> Refresh(string refreshToken) {
 
-            try {
+            var principal = _tokenService.ValidateRefreshToken(refreshToken);
+            var userId = Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                var principal = _tokenService.ValidateRefreshToken(refreshToken);
-                var userId = Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier));
-
-                if (userId == null) {
-                    return Unauthorized("Invalid refresh token: User ID not found.");
-                }
-
-                var user = await _userService.GetUserByIdAsync(userId);
-
-
-                var newToken = _tokenService.GenerateTokens(user);
-
-                return Ok(new { AccessToken = newToken.AccessToken });
-
-            } catch (Exception ex) {
-
-                throw;
-
+            if (userId == null) {
+                return Unauthorized("Invalid refresh token: User ID not found.");
             }
+
+            var user = await _userService.GetUserByIdAsync(userId);
+
+
+            var newToken = _tokenService.GenerateTokens(user);
+
+            return Ok(new { AccessToken = newToken.AccessToken });
 
         }
         
-
-
     }
 
 }
