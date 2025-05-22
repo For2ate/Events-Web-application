@@ -1,9 +1,6 @@
-﻿using EventApp.Api.Core.Interfaces;
+﻿using EventApp.Core.Interfaces;
 using EventApp.Models.UserDTO.Requests;
-using EventApp.Models.UserDTO.Responses;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Authentication;
 using System.Security.Claims;
 
 namespace EventApp.Api.Controllers {

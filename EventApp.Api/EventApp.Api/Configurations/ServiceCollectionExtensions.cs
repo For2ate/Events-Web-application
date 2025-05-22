@@ -1,16 +1,16 @@
-﻿using EventApp.Api.Core.Interfaces;
-using EventApp.Api.Core.Services;
-using EventApp.Api.Core.Validation;
-using EventApp.Data.Interfaces;
-using EventApp.Api.Core.MappingProfilies;
-using EventApp.Data.Repositories;
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
-using EventApp.Api.Core.Resolvers;
 using Microsoft.OpenApi.Models;
-using EventApp.Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using EventApp.Data.Interfaces;
+using EventApp.Data.Repositories;
+using EventApp.Core.Interfaces;
+using EventApp.Core.Services;
+using EventApp.Core.Resolvers;
+using EventApp.Core.MappingProfilies;
+using EventApp.Data.DbContexts;
+using EventApp.Core.Validation;
 
 namespace EventApp.Api.Configurations {
 

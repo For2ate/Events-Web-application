@@ -1,4 +1,4 @@
-﻿using EventApp.Api.Core.Interfaces;
+﻿using EventApp.Core.Interfaces;
 using EventApp.Models.EventCategoryDTO.Request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

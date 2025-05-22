@@ -1,4 +1,4 @@
-﻿using EventApp.Api.Exceptions;
+﻿using EventApp.Core.Exceptions;
 using EventApp.Models.SharedDTO;
 using System.Net;
 using System.Text.Json;
@@ -60,6 +60,7 @@ namespace EventApp.Api.Middleware {
             var jsonResponse = JsonSerializer.Serialize(responsePayload, new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
             });
+
             return context.Response.WriteAsync(jsonResponse);
 
         }
