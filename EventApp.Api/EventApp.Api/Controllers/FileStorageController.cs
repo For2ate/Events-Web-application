@@ -22,15 +22,7 @@ namespace EventApp.Api.Controllers {
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImage(IFormFile file) {
 
-            if (file == null || file.Length == 0) {
-                return BadRequest("No file uploaded or file is empty.");
-            }
-
             var imageUrl = await _fileStorageService.SaveFileAsync(file);
-
-            if (imageUrl == null) {
-                return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred while saving the image.");
-            }
 
             return Ok(imageUrl);
 

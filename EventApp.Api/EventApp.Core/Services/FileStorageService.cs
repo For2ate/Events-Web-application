@@ -25,11 +25,11 @@ namespace EventApp.Core.Services {
 
         public async Task<string?> SaveFileAsync(IFormFile file) {
 
-            if (file == null || file.Length == 0) {
-                return null;
-            }
-
             try {
+
+                if (file == null || file.Length == 0) {
+                    throw new ArgumentException("File is null");
+                }
 
                 if (file.Length > MaxFileSize) {
                     throw new ArgumentException($"File size exceeds the limit of {MaxFileSize / 1024 / 1024} MB.");
