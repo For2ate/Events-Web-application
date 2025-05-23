@@ -1,10 +1,5 @@
 using EventApp.Api.Configurations;
 using EventApp.Api.Middleware;
-using EventApp.Data.DbContexts;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using Scalar.AspNetCore;
-using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,9 +12,8 @@ builder.Services
     .AddApplicationServices()                     
     .AddApplicationFluentValidation()
     .AddApplicationJwtAuthentication(builder.Configuration)
-    .AddApplicationControllers();
-
-builder.Services.AddAuthorization();
+    .AddApplicationControllers()
+    .AddAuthorization();
 
 var app = builder.Build();
 

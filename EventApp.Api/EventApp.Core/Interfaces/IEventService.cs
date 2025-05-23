@@ -8,7 +8,8 @@ namespace EventApp.Core.Interfaces {
 
         Task<EventFullResponseModel?> GetEventByIdAsync(Guid id);
 
-        Task<IEnumerable<EventFullResponseModel>> GetAllEventsAsync();
+        Task<PagedListResponse<EventFullResponseModel>> GetAllEventsAsync(
+            EventQueryParameters queryParameters);
 
         Task<EventFullResponseModel> GetEventByNameAsync(string name);
 

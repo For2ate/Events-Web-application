@@ -21,9 +21,9 @@ namespace EventApp.Api.Controllers {
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllEvents() {
+        public async Task<IActionResult> GetAllEvents([FromQuery]EventQueryParameters eventQuery) {
             
-            var events = await _eventService.GetAllEventsAsync();
+            var events = await _eventService.GetAllEventsAsync(eventQuery);
 
             return Ok(events);
         

@@ -5,10 +5,10 @@ using EventApp.Data.Entities;
 using EventApp.Data.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
-using EventApp.Models.SharedDTO;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
+using EventApp.Core.Extensions;
+using EventApp.Models.SharedDTO;
 
 namespace EventApp.Core.Services {
 
@@ -43,18 +43,86 @@ namespace EventApp.Core.Services {
 
         }
 
-        public async Task<IEnumerable<EventFullResponseModel>> GetAllEventsAsync(
+        public async Task<PagedListResponse<EventFullResponseModel>> GetAllEventsAsync(
             EventQueryParameters queryParameters) {
 
             try {
 
-                Expression<Func<EventEntity, bool>>? filterExpression = null;
+                var predicates = new List<Expression<Func<EventEntity, bool>>>();
 
+                if (queryParameters.DateFrom.HasValue) {
+                    var dateFromUtc = queryParameters.DateFrom.Value.ToUniversalTime();
+                    predicates.Add(e => e.DateOfEvent >= dateFromUtc);
+                }
 
+                if (queryParameters.DateTo.HasValue) {
+                    var dateToUtc = queryParameters.DateTo.Value.Date.AddDays(1).AddTicks(-1).ToUniversalTime();
+                    predicates.Add(e => e.DateOfEvent <= dateToUtc);
+                }
 
-                var events = await _eventRepository.GetAllAsync();
+                if (!string.IsNullOrWhiteSpace(queryParameters.Place)) {
+                    string placeSearchTerm = queryParameters.Place.Trim().ToLowerInvariant();
+                    predicates.Add(e => e.Place.ToLower().Contains(placeSearchTerm));
+                }
 
-                return _eventMapper.Map<IEnumerable<EventFullResponseModel>>(events);
+                if (queryParameters.CategoryId.HasValue && queryParameters.CategoryId.Value != Guid.Empty) {
+                    predicates.Add(e => e.CategoryId == queryParameters.CategoryId.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(queryParameters.NameContains)) {
+                    string nameSearchTerm = queryParameters.NameContains.Trim().ToLowerInvariant();
+                    predicates.Add(e => e.Name.ToLower().Contains(nameSearchTerm));
+                }
+
+                Expression<Func<EventEntity, bool>>? filterExpression = predicates.CombineAnd();
+
+                Func<IQueryable<EventEntity>, IOrderedQueryable<EventEntity>>? orderByFunc = null;
+                bool isDescending = queryParameters.SortOrder == SortOrderEnum.desc;
+
+                switch (queryParameters.SortBy ?? EventSortByEnum.date) {
+
+                    case EventSortByEnum.name:
+                        orderByFunc = q => isDescending ? q.OrderByDescending(e => e.Name) : q.OrderBy(e => e.Name);
+                        break;
+
+                    case EventSortByEnum.date:
+                        orderByFunc = q => isDescending ? q.OrderByDescending(e => e.DateOfEvent) : q.OrderBy(e => e.DateOfEvent);
+                        break;
+
+                    case EventSortByEnum.place:
+                        orderByFunc = q => isDescending ? q.OrderByDescending(e => e.Place) : q.OrderBy(e => e.Place);
+                        break;
+
+                    case EventSortByEnum.category:
+                        orderByFunc = q => isDescending
+                            ? q.OrderByDescending(e => e.Category != null ? e.Category.Name : string.Empty)
+                            : q.OrderBy(e => e.Category != null ? e.Category.Name : string.Empty);
+                        break;
+
+                    default:
+                        orderByFunc = q => q.OrderBy(e => e.DateOfEvent);
+                        break;
+
+                }
+
+                int totalCount = await _eventRepository.CountAsync(filterExpression);
+
+                var eventEntities = await _eventRepository.GetAllAsync(
+                    filter: filterExpression,
+                    orderBy: orderByFunc,
+                    includeProperties: "Category",
+                    skip: ( queryParameters.PageNumber - 1 ) * queryParameters.PageSize,
+                    take: queryParameters.PageSize
+                );
+
+                var events = _eventMapper.Map<IEnumerable<EventFullResponseModel>>(eventEntities);
+
+                return new PagedListResponse<EventFullResponseModel>(
+                    events,
+                    queryParameters.PageNumber,
+                    queryParameters.PageSize,
+                    totalCount
+                );
 
             } catch (Exception ex) {
 
