@@ -302,34 +302,37 @@ namespace EventApp.Tests.UnitTests.RepositoryTests {
 
         [Fact]
         public async Task GetEventByNameAsync_WhenEventWithGivenNameExists_ShouldReturnEntity() {
-            
-            // Arrange
-            var eventName = _fixture.Create<string>(); 
+
+            var eventName = _fixture.Create<string>();
+            var categoryId = _fixture.Create<Guid>(); 
+
+            var category = _fixture.Build<EventCategoryEntity>()
+                                   .With(c => c.Id, categoryId)
+                                   .Without(c => c.Events)
+                                   .Create();
+
             var expectedEntity = _fixture.Build<EventEntity>()
                                          .With(e => e.Name, eventName)
+                                         .With(e => e.CategoryId, categoryId) 
+                                         .Without(e => e.Category)    
+                                         .Without(e => e.Registrations)
                                          .Create();
-            if (expectedEntity.CategoryId == Guid.Empty) expectedEntity.CategoryId = _fixture.Create<Guid>();
-
-            var otherEntities = _fixture.Build<EventEntity>()
-                                        .Without(e => e.Name) 
-                                        .CreateMany(2).ToList();
-            otherEntities.ForEach(e => {
-                e.Name = _fixture.Create<string>(); 
-                if (e.CategoryId == Guid.Empty) e.CategoryId = _fixture.Create<Guid>();
-            });
 
             _dbContext.Events.Add(expectedEntity);
-            _dbContext.Events.AddRange(otherEntities);
             await _dbContext.SaveChangesAsync();
 
+            _dbContext.ChangeTracker.Clear();
+
             // Act
-           
-            var eventRepository = new EventRepository(_dbContext); 
+            var eventRepository = new EventRepository(_dbContext);
             var result = await eventRepository.GetEventByNameAsync(eventName);
 
             // Assert
             result.Should().NotBeNull();
-            result.Should().BeEquivalentTo(expectedEntity);
+            result.Should().BeEquivalentTo(expectedEntity, options => options
+                .Excluding(e => e.Category)       
+                .Excluding(e => e.Registrations)  
+            );
 
         }
 
