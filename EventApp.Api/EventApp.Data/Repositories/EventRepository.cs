@@ -14,7 +14,8 @@ namespace EventApp.Data.Repositories {
 
         public async Task<EventEntity> GetEventByNameAsync(string name) {
 
-            var eventEntity = await _dbSet.FirstOrDefaultAsync(e => e.Name == name);
+            var eventEntity = await _dbSet.AsNoTracking()
+                                            .FirstOrDefaultAsync(e => e.Name == name);
 
             return eventEntity;
 

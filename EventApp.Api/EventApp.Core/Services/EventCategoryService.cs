@@ -156,5 +156,4 @@ namespace EventApp.Core.Services {
         
     }
 
-
 }

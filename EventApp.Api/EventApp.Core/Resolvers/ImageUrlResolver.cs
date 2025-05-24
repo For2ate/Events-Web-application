@@ -16,8 +16,8 @@ namespace EventApp.Core.Resolvers {
 
         public string? Resolve(
            EventEntity source,          // Объект-источник (наша EventEntity)
-           object destination,          // Объект-назначение (наш DTO, но мы его здесь не используем)
-           string? destMember,          // Текущее значение поля назначения до маппинга (обычно null)
+           object destination,          // Объект-назначение (наш DTO)
+           string? destMember,          // Текущее значение поля назначения до маппинга
            ResolutionContext context    // Контекст маппинга AutoMapper
            ) {
 

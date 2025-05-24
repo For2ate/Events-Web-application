@@ -32,7 +32,6 @@ namespace EventApp.Data.Repositories {
 
             query = query.AsNoTracking();
 
-
             if (filter != null) {
                 query = query.Where(filter);
             }
@@ -61,6 +60,7 @@ namespace EventApp.Data.Repositories {
         public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? filter = null) {
 
             IQueryable<TEntity> query = _dbSet;
+
             query = query.AsNoTracking();
 
             if (filter != null) {

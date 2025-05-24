@@ -14,6 +14,7 @@ namespace EventApp.Core.Services {
         private static readonly string[] AllowedImageTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
         private const long MaxFileSize = 5 * 1024 * 1024;
         private const string ImageUrlSegment = "/images";
+
         public FileStorageService(IWebHostEnvironment webHostEnvironment, ILogger<FileStorageService> logger) {
 
             _logger = logger;
