@@ -1,4 +1,4 @@
-﻿using EventApp.Api.Core.Interfaces;
+﻿using EventApp.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

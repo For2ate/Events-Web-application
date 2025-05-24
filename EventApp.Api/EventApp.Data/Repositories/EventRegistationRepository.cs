@@ -11,7 +11,8 @@ namespace EventApp.Data.Repositories {
 
         public async Task<EventRegistrationEntity> ExistsRegistrationAsync(Guid userId, Guid eventId) {
 
-            var registration = await _dbSet.FirstOrDefaultAsync(er => er.UserId == userId && er.EventId == eventId);
+            var registration = await _dbSet.AsNoTracking()
+                                           .FirstOrDefaultAsync(er => er.UserId == userId && er.EventId == eventId);
 
             return registration;
 

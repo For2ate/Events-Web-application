@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EventApp.Data\EventApp.Data.csproj" />
+    <ProjectReference Include="..\EventApp.Core\EventApp.Core.csproj" />
     <ProjectReference Include="..\EventApp.Models\EventApp.Models.csproj" />
   </ItemGroup>
 

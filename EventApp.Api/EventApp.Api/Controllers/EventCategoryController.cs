@@ -1,7 +1,10 @@
-﻿using EventApp.Api.Core.Interfaces;
+﻿using EventApp.Core.Interfaces;
+using EventApp.Models.EventCategoriyDTO.Request;
 using EventApp.Models.EventCategoryDTO.Request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Text.Json;
 
 namespace EventApp.Api.Controllers {
 
@@ -19,22 +22,29 @@ namespace EventApp.Api.Controllers {
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCategories() {
-            
-            var categories = await _categoryService.GetAllCategoriesAsync();
-            
-            return Ok(categories);
-        
+        public async Task<IActionResult> GetAllCategories([FromQuery] EventCategoryPagedQueryParametrs queryParameters) {
+
+            var pagedResult = await _categoryService.GetAllCategoriesAsync(queryParameters);
+
+            var paginationMetadata = new {
+                pagedResult.TotalCount,
+                pagedResult.PageSize,
+                pagedResult.PageNumber,
+                pagedResult.TotalPages,
+                pagedResult.HasNextPage,
+                pagedResult.HasPreviousPage
+            };
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
+
+            return Ok(pagedResult.Items);
+
         }
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetCategoryById(Guid id) {
            
             var category = await _categoryService.GetCategoryByIdAsync(id);
-           
-            if (category == null) {
-                return NotFound($"Category with ID {id} not found.");
-            }
             
             return Ok(category);
         
@@ -42,65 +52,28 @@ namespace EventApp.Api.Controllers {
 
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromBody] CreateEventCategoryRequestModel model) {
-            
-            try {
-                
-                var createdCategory = await _categoryService.CreateCategoryAsync(model);
-                
-                return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
-           
-            } catch (ArgumentException ex) {
-                
-                return BadRequest(ex.Message);
-            
-            }
+
+            var createdCategory = await _categoryService.CreateCategoryAsync(model);
+
+            return CreatedAtAction(nameof(GetCategoryById), new { id = createdCategory.Id }, createdCategory);
+
         }
 
         [HttpPut]
         public async Task<IActionResult> UpdateCategory([FromBody] UpdateEventCategoryRequestModel model) {
-           
-            if (model.Id == Guid.Empty) {
-                return BadRequest("Category ID is required for update.");
-            }
 
-            try {
-                
-                var updatedCategory = await _categoryService.UpdateCategoryAsync(model);
-                
-                if (updatedCategory == null) {
-                    
-                    return NotFound($"Category with ID {model.Id} not found for update.");
-                
-                }
+            var updatedCategory = await _categoryService.UpdateCategoryAsync(model);
 
-                return Ok(updatedCategory);
-
-            } catch (ArgumentException ex) {
-
-                return BadRequest(ex.Message);
-
-            }
+            return Ok(updatedCategory);
 
         }
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteCategory(Guid id) {
-            
-            try {
-                
-                var success = await _categoryService.DeleteCategoryAsync(id);
-                
-                if (!success) {
-                    return NotFound($"Category with ID {id} not found.");
-                }
-            
-                return NoContent();
-            
-            } catch (InvalidOperationException ex) {
-         
-                return BadRequest(ex.Message);
-            
-            }
+
+            await _categoryService.DeleteCategoryAsync(id);
+
+            return NoContent();
 
         }
 
