@@ -8,6 +8,7 @@ WORKDIR /src
 COPY *.sln .
 
 COPY ./EventApp.Api/EventApp.Api/ ./EventApp.Api/
+COPY ./EventApp.Api/EventApp.Core/ ./EventApp.Core/
 COPY ./EventApp.Api/EventApp.Data/ ./EventApp.Data/
 COPY ./EventApp.Api/EventApp.Models/ ./EventApp.Models/
 
