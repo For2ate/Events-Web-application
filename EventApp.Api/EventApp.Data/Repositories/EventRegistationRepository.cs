@@ -11,7 +11,8 @@ namespace EventApp.Data.Repositories {
 
         public async Task<EventRegistrationEntity> ExistsRegistrationAsync(Guid userId, Guid eventId) {
 
-            var registration = await _dbSet.FirstOrDefaultAsync(er => er.UserId == userId && er.EventId == eventId);
+            var registration = await _dbSet.AsNoTracking()
+                                           .FirstOrDefaultAsync(er => er.UserId == userId && er.EventId == eventId);
 
             return registration;
 
@@ -20,6 +21,8 @@ namespace EventApp.Data.Repositories {
         public async Task<IEnumerable<EventRegistrationEntity>> GetParticipantsAsync(Guid eventId) {
 
             IQueryable<EventRegistrationEntity> query = _dbSet;
+
+            query = query.AsNoTracking();
 
             query = query.Where(r => r.EventId == eventId);
             query = query.Include(r => r.User);

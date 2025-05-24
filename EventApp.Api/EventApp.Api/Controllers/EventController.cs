@@ -1,4 +1,4 @@
-﻿using EventApp.Api.Core.Interfaces;
+﻿using EventApp.Core.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
 using Microsoft.AspNetCore.Authorization;
@@ -21,18 +21,9 @@ namespace EventApp.Api.Controllers {
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllEvents() {
-            
-            var events = await _eventService.GetAllEventsAsync();
+        public async Task<IActionResult> GetAllEvents([FromQuery]EventQueryParameters eventQuery) {
 
-            return Ok(events);
-        
-        }
-
-        [HttpGet("filtered")]
-        public async Task<IActionResult> GetFilteredEvents([FromQuery] EventQueryParameters queryParameters) {
-
-            var pagedResult = await _eventService.GetFilteredEventsAsync(queryParameters);
+            var pagedResult = await _eventService.GetAllEventsAsync(eventQuery);
 
             var paginationMetadata = new {
                 pagedResult.TotalCount,
@@ -42,20 +33,17 @@ namespace EventApp.Api.Controllers {
                 pagedResult.HasNextPage,
                 pagedResult.HasPreviousPage
             };
-            
-            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(paginationMetadata));
 
+            Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata)); 
+            
             return Ok(pagedResult.Items);
+
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEventById(Guid id) {
 
             var eventModel = await _eventService.GetEventByIdAsync(id);
-
-            if (eventModel == null) {
-                return NotFound($"Event with ID {id} not found.");
-            }
 
             return Ok(eventModel);
 
@@ -64,81 +52,37 @@ namespace EventApp.Api.Controllers {
         [HttpGet("byname/{name}")]
         public async Task<IActionResult> GetEventByName(string name) {
 
-            if (string.IsNullOrWhiteSpace(name)) {
-                return BadRequest("Event name cannot be empty.");
-            }
+            var eventModel = await _eventService.GetEventByNameAsync(name);
 
-            try {
-                var eventModel = await _eventService.GetEventByNameAsync(name);
-
-                if (eventModel == null) {
-                    return NotFound($"Event with name '{name}' not found.");
-                }
-
-                return Ok(eventModel);
-
-            } catch (KeyNotFoundException ex) {
-
-                return NotFound(ex.Message);
-
-            }
+            return Ok(eventModel);
 
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequestModel model) {
 
-            try {
+            var createdEvent = await _eventService.CreateEventAsync(model);
 
-                var createdEvent = await _eventService.CreateEventAsync(model);
-
-                return CreatedAtAction(nameof(GetEventById), new { id = createdEvent.Id }, createdEvent);
-
-            } catch (ArgumentException ex) {
-
-                return BadRequest(ex.Message);
-            }
+            return CreatedAtAction(nameof(GetEventById), new { id = createdEvent.Id }, createdEvent);
 
         }
 
-        [HttpPut] 
+        [HttpPut]
         public async Task<IActionResult> UpdateEvent([FromBody] UpdateEventRequestModel model) {
 
-            try {
 
-                var updatedEvent = await _eventService.UpdateEventAsync(model);
+            var updatedEvent = await _eventService.UpdateEventAsync(model);
 
-                if (updatedEvent == null) {
-                    return NotFound($"Event with ID {model.Id} not found for update.");
-                }
-
-                return Ok(updatedEvent);
-
-            } catch (ArgumentException ex) {
-
-                return BadRequest(ex.Message);
-
-            } catch (KeyNotFoundException ex) {
-
-                return NotFound(ex.Message);
-            }
+            return Ok(updatedEvent);
 
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(Guid id) {
 
-            try {
+            await _eventService.DeleteEventByIdAsync(id);
 
-                await _eventService.DeleteEventByIdAsync(id);
-
-                return NoContent();
-
-            } catch (KeyNotFoundException ex) {
-
-                return NotFound(ex.Message);
-
-            }
+            return NoContent();
 
         }
 
