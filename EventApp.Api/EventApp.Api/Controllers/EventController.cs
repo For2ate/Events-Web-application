@@ -22,11 +22,22 @@ namespace EventApp.Api.Controllers {
 
         [HttpGet]
         public async Task<IActionResult> GetAllEvents([FromQuery]EventQueryParameters eventQuery) {
-            
-            var events = await _eventService.GetAllEventsAsync(eventQuery);
 
-            return Ok(events);
-        
+            var pagedResult = await _eventService.GetAllEventsAsync(eventQuery);
+
+            var paginationMetadata = new {
+                pagedResult.TotalCount,
+                pagedResult.PageSize,
+                pagedResult.PageNumber,
+                pagedResult.TotalPages,
+                pagedResult.HasNextPage,
+                pagedResult.HasPreviousPage
+            };
+
+            Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(paginationMetadata)); 
+            
+            return Ok(pagedResult.Items);
+
         }
 
         [HttpGet("{id}")]

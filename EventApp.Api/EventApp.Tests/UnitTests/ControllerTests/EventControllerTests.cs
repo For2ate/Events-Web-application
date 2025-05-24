@@ -2,6 +2,7 @@
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using EventApp.Api.Controllers;
+using EventApp.Core.Exceptions;
 using EventApp.Core.Interfaces;
 using EventApp.Models.EventDTO.Request;
 using EventApp.Models.EventDTO.Response;
@@ -10,6 +11,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace EventApp.Tests.UnitTests.ControllerTests {
 
@@ -51,173 +54,178 @@ namespace EventApp.Tests.UnitTests.ControllerTests {
         // =======================================================================
 
         [Fact]
-        public async Task GetAllEvents_ShouldReturnOkWithEvents_WhenServiceReturnsEvents() {
+        public async Task GetAllEvents_WithDefaultQueryParameters_ShouldReturnOkWithEventItemsAndPaginationHeaders_JsonNode() {
             // Arrange
-            var expectedEvents = _fixture.CreateMany<EventFullResponseModel>().ToList();
-            _mockEventService.Setup(s => s.GetAllEventsAsync()).ReturnsAsync(expectedEvents);
+            var queryParameters = _fixture.Create<EventQueryParameters>();
+            var eventItems = _fixture.CreateMany<EventFullResponseModel>(queryParameters.PageSize).ToList();
+            var totalCount = eventItems.Count + queryParameters.PageSize;
+            var expectedPagedResponse = new PagedListResponse<EventFullResponseModel>(
+                eventItems, queryParameters.PageNumber, queryParameters.PageSize, totalCount);
+
+            _mockEventService.Setup(s => s.GetAllEventsAsync(queryParameters)).ReturnsAsync(expectedPagedResponse);
 
             // Act
-            var result = await _sut.GetAllEvents();
+            var result = await _sut.GetAllEvents(queryParameters);
 
             // Assert
             var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
             okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
-            okResult.Value.Should().BeEquivalentTo(expectedEvents);
-            _mockEventService.Verify(s => s.GetAllEventsAsync(), Times.Once);
-        }
-
-        // =======================================================================
-        // Тесты для    GetFilteredEvents
-        // =======================================================================
-
-
-        [Theory]
-        [AutoData]
-        public async Task GetFilteredEvents_ShouldReturnOkWithPaginatedItemsAndHeaders_WhenServiceReturnsPagedResult(
-    EventQueryParameters queryParameters) {
-            
-            // Arrange
-            var pagedResultFromService = _fixture.Create<PagedListResponse<EventFullResponseModel>>();
-            _mockEventService.Setup(s => s.GetFilteredEventsAsync(queryParameters))
-                             .ReturnsAsync(pagedResultFromService);
-
-            // Act
-            var result = await _sut.GetFilteredEvents(queryParameters);
-
-            // Assert
-            var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-            okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
-            okResult.Value.Should().BeEquivalentTo(pagedResultFromService.Items);
-
-            _mockEventService.Verify(s => s.GetFilteredEventsAsync(queryParameters), Times.Once);
+            okResult.Value.Should().BeEquivalentTo(expectedPagedResponse.Items);
 
             _sut.Response.Headers.Should().ContainKey("X-Pagination");
-            var paginationHeader = _sut.Response.Headers["X-Pagination"].ToString();
-            paginationHeader.Should().Contain($"\"TotalCount\":{pagedResultFromService.TotalCount}");
-        
+            var paginationHeaderJson = _sut.Response.Headers["X-Pagination"].FirstOrDefault();
+            paginationHeaderJson.Should().NotBeNullOrEmpty();
+
+            var expectedMetadata = new {
+                expectedPagedResponse.TotalCount,
+                expectedPagedResponse.PageSize,
+                expectedPagedResponse.PageNumber,
+                expectedPagedResponse.TotalPages,
+                expectedPagedResponse.HasNextPage,
+                expectedPagedResponse.HasPreviousPage
+            };
+
+            JsonNode? actualMetadataNode = JsonNode.Parse(paginationHeaderJson!);
+            actualMetadataNode.Should().NotBeNull();
+            JsonObject actualMetadataObject = actualMetadataNode!.AsObject();
+
+            actualMetadataObject["TotalCount"]!.GetValue<int>().Should().Be(expectedMetadata.TotalCount);
+            actualMetadataObject["PageSize"]!.GetValue<int>().Should().Be(expectedMetadata.PageSize);
+            actualMetadataObject["PageNumber"]!.GetValue<int>().Should().Be(expectedMetadata.PageNumber);
+            actualMetadataObject["TotalPages"]!.GetValue<int>().Should().Be(expectedMetadata.TotalPages);
+            actualMetadataObject["HasNextPage"]!.GetValue<bool>().Should().Be(expectedMetadata.HasNextPage);
+            actualMetadataObject["HasPreviousPage"]!.GetValue<bool>().Should().Be(expectedMetadata.HasPreviousPage);
+
+            _mockEventService.Verify(s => s.GetAllEventsAsync(queryParameters), Times.Once);
+
+        }
+
+        [Fact]
+        public async Task GetAllEvents_WhenServiceReturnsEmptyPagedList_ShouldReturnOkWithEmptyListAndPaginationHeaders() {
+            // Arrange
+            var queryParameters = new EventQueryParameters(); 
+            var emptyEventItems = new List<EventFullResponseModel>();
+            var totalCount = 0;
+
+            var expectedPagedResponse = new PagedListResponse<EventFullResponseModel>(
+                emptyEventItems,
+                queryParameters.PageNumber,
+                queryParameters.PageSize,
+                totalCount
+            );
+
+            _mockEventService
+                .Setup(s => s.GetAllEventsAsync(It.IsAny<EventQueryParameters>()))
+                .ReturnsAsync(expectedPagedResponse);
+
+            // Act
+            var result = await _sut.GetAllEvents(queryParameters);
+
+            // Assert
+            var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+            okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+            okResult.Value.As<IEnumerable<EventFullResponseModel>>().Should().BeEmpty();
+
+            _mockEventService.Verify(s => s.GetAllEventsAsync(It.Is<EventQueryParameters>(qp =>
+                qp.PageNumber == queryParameters.PageNumber && qp.PageSize == queryParameters.PageSize
+            )), Times.Once);
+
+            _sut.Response.Headers.Should().ContainKey("X-Pagination");
+            var paginationHeaderJson = _sut.Response.Headers["X-Pagination"].ToString();
+            JsonNode? actualMetadataNode = JsonNode.Parse(paginationHeaderJson!);
+            actualMetadataNode.Should().NotBeNull();
+            JsonObject actualMetadataObject = actualMetadataNode!.AsObject();
+
+            actualMetadataObject["TotalCount"]!.GetValue<int>().Should().Be(0);
+            actualMetadataObject["TotalPages"]!.GetValue<int>().Should().Be(0); 
+            actualMetadataObject["HasNextPage"]!.GetValue<bool>().Should().BeFalse();
+            actualMetadataObject["HasPreviousPage"]!.GetValue<bool>().Should().BeFalse();
+
         }
 
         // =======================================================================
         // Тесты для    GetEventById
         // =======================================================================
 
-        [Theory]
-        [AutoData]
-        public async Task GetEventById_ShouldReturnOkWithEvent_WhenEventExists(Guid id) {
-            
+        [Fact]
+        public async Task GetEventById_WhenEventExists_ShouldReturnOkWithEvent() {
             // Arrange
+            var eventId = _fixture.Create<Guid>();
             var expectedEvent = _fixture.Create<EventFullResponseModel>();
-            _mockEventService.Setup(s => s.GetEventByIdAsync(id)).ReturnsAsync(expectedEvent);
+            _mockEventService.Setup(s => s.GetEventByIdAsync(eventId)).ReturnsAsync(expectedEvent);
 
             // Act
-            var result = await _sut.GetEventById(id);
+            var result = await _sut.GetEventById(eventId);
 
             // Assert
             var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
             okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
             okResult.Value.Should().BeEquivalentTo(expectedEvent);
-            _mockEventService.Verify(s => s.GetEventByIdAsync(id), Times.Once);
+            _mockEventService.Verify(s => s.GetEventByIdAsync(eventId), Times.Once);
         }
 
-        [Theory]
-        [AutoData]
-        public async Task GetEventById_ShouldReturnNotFound_WhenEventDoesNotExist(Guid id) {
+        [Fact]
+        public async Task GetEventById_WhenServiceThrowsNotFoundException_ShouldRethrow() {
             // Arrange
-            _mockEventService.Setup(s => s.GetEventByIdAsync(id)).ReturnsAsync((EventFullResponseModel?)null);
+            var eventId = _fixture.Create<Guid>();
+            var serviceException = new NotFoundException("Event", eventId.ToString());
+            _mockEventService.Setup(s => s.GetEventByIdAsync(eventId)).ThrowsAsync(serviceException);
 
             // Act
-            var result = await _sut.GetEventById(id);
+            Func<Task> act = async () => await _sut.GetEventById(eventId);
 
             // Assert
-            var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
-            notFoundResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            notFoundResult.Value.Should().Be($"Event with ID {id} not found.");
-            _mockEventService.Verify(s => s.GetEventByIdAsync(id), Times.Once);
+            await act.Should().ThrowExactlyAsync<NotFoundException>().WithMessage(serviceException.Message);
+            _mockEventService.Verify(s => s.GetEventByIdAsync(eventId), Times.Once);
         }
 
         // =======================================================================
         // Тесты для    GetEventByName
         // =======================================================================
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData(" ")]
-        public async Task GetEventByName_ShouldReturnBadRequest_WhenNameIsNullOrWhitespace(string? name) {
+        [Fact]
+        public async Task GetEventByName_WhenEventExists_ShouldReturnOkWithEvent() {
             // Arrange
-            // No service call expected
-
-            // Act
-            var result = await _sut.GetEventByName(name!);
-
-            // Assert
-            var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-            badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-            badRequestResult.Value.Should().Be("Event name cannot be empty.");
-            _mockEventService.Verify(s => s.GetEventByNameAsync(It.IsAny<string>()), Times.Never);
-        }
-
-        [Theory]
-        [AutoData]
-        public async Task GetEventByName_ShouldReturnOkWithEvent_WhenEventExists(string name) {
-            // Arrange
+            var eventName = _fixture.Create<string>();
             var expectedEvent = _fixture.Create<EventFullResponseModel>();
-            _mockEventService.Setup(s => s.GetEventByNameAsync(name)).ReturnsAsync(expectedEvent);
+            _mockEventService.Setup(s => s.GetEventByNameAsync(eventName)).ReturnsAsync(expectedEvent);
 
             // Act
-            var result = await _sut.GetEventByName(name);
+            var result = await _sut.GetEventByName(eventName);
 
             // Assert
             var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
             okResult.StatusCode.Should().Be(StatusCodes.Status200OK);
             okResult.Value.Should().BeEquivalentTo(expectedEvent);
-            _mockEventService.Verify(s => s.GetEventByNameAsync(name), Times.Once);
+            _mockEventService.Verify(s => s.GetEventByNameAsync(eventName), Times.Once);
         }
 
-        [Theory]
-        [AutoData]
-        public async Task GetEventByName_ShouldReturnNotFound_WhenServiceReturnsNull(string name) {
+        [Fact]
+        public async Task GetEventByName_WhenServiceThrowsNotFoundException_ShouldRethrow() {
             // Arrange
-            _mockEventService.Setup(s => s.GetEventByNameAsync(name)).ReturnsAsync((EventFullResponseModel?)null);
+            var eventName = _fixture.Create<string>();
+            var serviceException = new NotFoundException("Event", eventName);
+            _mockEventService.Setup(s => s.GetEventByNameAsync(eventName)).ThrowsAsync(serviceException);
 
             // Act
-            var result = await _sut.GetEventByName(name);
+            Func<Task> act = async () => await _sut.GetEventByName(eventName);
 
             // Assert
-            var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
-            notFoundResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            notFoundResult.Value.Should().Be($"Event with name '{name}' not found.");
-            _mockEventService.Verify(s => s.GetEventByNameAsync(name), Times.Once);
-        }
-
-        [Theory]
-        [AutoData]
-        public async Task GetEventByName_ShouldReturnNotFound_WhenServiceThrowsKeyNotFoundException(string name) {
-            // Arrange
-            var exceptionMessage = "Specific key not found message";
-            _mockEventService.Setup(s => s.GetEventByNameAsync(name)).ThrowsAsync(new KeyNotFoundException(exceptionMessage));
-
-            // Act
-            var result = await _sut.GetEventByName(name);
-
-            // Assert
-            var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
-            notFoundResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            notFoundResult.Value.Should().Be(exceptionMessage);
-            _mockEventService.Verify(s => s.GetEventByNameAsync(name), Times.Once);
+            await act.Should().ThrowExactlyAsync<NotFoundException>().WithMessage(serviceException.Message);
+            _mockEventService.Verify(s => s.GetEventByNameAsync(eventName), Times.Once);
         }
 
         // =======================================================================
         // Тесты для    CreateEvent
         // =======================================================================
 
-        [Theory]
-        [AutoData]
-        public async Task CreateEvent_ShouldReturnCreatedAtAction_WhenCreationIsSuccessful(CreateEventRequestModel requestModel) {
+        [Fact]
+        public async Task CreateEvent_ValidModel_ShouldReturnCreatedAtActionWithEvent() {
             // Arrange
-            var createdEventDto = _fixture.Create<EventFullResponseModel>();
-            // Гарантируем, что у созданного DTO есть Id для проверки CreatedAtAction
-            createdEventDto.Id = _fixture.Create<Guid>();
+            var requestModel = _fixture.Create<CreateEventRequestModel>();
+            var createdEventDto = _fixture.Build<EventFullResponseModel>()
+                                          .With(e => e.Id, Guid.NewGuid()) 
+                                          .Create();
             _mockEventService.Setup(s => s.CreateEventAsync(requestModel)).ReturnsAsync(createdEventDto);
 
             // Act
@@ -232,20 +240,18 @@ namespace EventApp.Tests.UnitTests.ControllerTests {
             _mockEventService.Verify(s => s.CreateEventAsync(requestModel), Times.Once);
         }
 
-        [Theory]
-        [AutoData]
-        public async Task CreateEvent_ShouldReturnBadRequest_WhenServiceThrowsArgumentException(CreateEventRequestModel requestModel) {
+        [Fact]
+        public async Task CreateEvent_WhenServiceThrowsBadRequestException_ShouldRethrow() {
             // Arrange
-            var exceptionMessage = "Invalid category ID";
-            _mockEventService.Setup(s => s.CreateEventAsync(requestModel)).ThrowsAsync(new ArgumentException(exceptionMessage));
+            var requestModel = _fixture.Create<CreateEventRequestModel>();
+            var serviceException = new BadRequestException("Invalid event data.");
+            _mockEventService.Setup(s => s.CreateEventAsync(requestModel)).ThrowsAsync(serviceException);
 
             // Act
-            var result = await _sut.CreateEvent(requestModel);
+            Func<Task> act = async () => await _sut.CreateEvent(requestModel);
 
             // Assert
-            var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-            badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-            badRequestResult.Value.Should().Be(exceptionMessage);
+            await act.Should().ThrowExactlyAsync<BadRequestException>().WithMessage(serviceException.Message);
             _mockEventService.Verify(s => s.CreateEventAsync(requestModel), Times.Once);
         }
 
@@ -253,12 +259,13 @@ namespace EventApp.Tests.UnitTests.ControllerTests {
         // Тесты для    UpdateEvent
         // =======================================================================
 
-        [Theory]
-        [AutoData]
-        public async Task UpdateEvent_ShouldReturnOkWithUpdatedEvent_WhenUpdateIsSuccessful(UpdateEventRequestModel requestModel) {
+        [Fact]
+        public async Task UpdateEvent_ValidModel_ShouldReturnOkWithUpdatedEvent() {
             // Arrange
-            var updatedEventDto = _fixture.Create<EventFullResponseModel>();
-            updatedEventDto.Id = requestModel.Id;
+            var requestModel = _fixture.Create<UpdateEventRequestModel>();
+            var updatedEventDto = _fixture.Build<EventFullResponseModel>()
+                                          .With(e => e.Id, requestModel.Id) // Ensure ID matches
+                                          .Create();
             _mockEventService.Setup(s => s.UpdateEventAsync(requestModel)).ReturnsAsync(updatedEventDto);
 
             // Act
@@ -271,95 +278,53 @@ namespace EventApp.Tests.UnitTests.ControllerTests {
             _mockEventService.Verify(s => s.UpdateEventAsync(requestModel), Times.Once);
         }
 
-        [Theory]
-        [AutoData]
-        public async Task UpdateEvent_ShouldReturnNotFound_WhenServiceReturnsNull(UpdateEventRequestModel requestModel) {
+        [Fact]
+        public async Task UpdateEvent_WhenServiceThrowsNotFoundException_ShouldRethrow() {
             // Arrange
-            _mockEventService.Setup(s => s.UpdateEventAsync(requestModel)).ReturnsAsync((EventFullResponseModel?)null);
+            var requestModel = _fixture.Create<UpdateEventRequestModel>();
+            var serviceException = new NotFoundException("Event", requestModel.Id.ToString());
+            _mockEventService.Setup(s => s.UpdateEventAsync(requestModel)).ThrowsAsync(serviceException);
 
             // Act
-            var result = await _sut.UpdateEvent(requestModel);
+            Func<Task> act = async () => await _sut.UpdateEvent(requestModel);
 
             // Assert
-            var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
-            notFoundResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            notFoundResult.Value.Should().Be($"Event with ID {requestModel.Id} not found for update.");
+            await act.Should().ThrowExactlyAsync<NotFoundException>().WithMessage(serviceException.Message);
             _mockEventService.Verify(s => s.UpdateEventAsync(requestModel), Times.Once);
         }
 
-        [Theory]
-        [AutoData]
-        public async Task UpdateEvent_ShouldReturnBadRequest_WhenServiceThrowsArgumentException(UpdateEventRequestModel requestModel) {
-            // Arrange
-            var exceptionMessage = "Invalid data for update";
-            _mockEventService.Setup(s => s.UpdateEventAsync(requestModel)).ThrowsAsync(new ArgumentException(exceptionMessage));
-
-            // Act
-            var result = await _sut.UpdateEvent(requestModel);
-
-            // Assert
-            var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-            badRequestResult.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-            badRequestResult.Value.Should().Be(exceptionMessage);
-            _mockEventService.Verify(s => s.UpdateEventAsync(requestModel), Times.Once);
-        }
-
-        [Theory]
-        [AutoData]
-        public async Task UpdateEvent_ShouldReturnNotFound_WhenServiceThrowsKeyNotFoundException(UpdateEventRequestModel requestModel) {
-            // Arrange
-            var exceptionMessage = "Underlying resource not found";
-            _mockEventService.Setup(s => s.UpdateEventAsync(requestModel)).ThrowsAsync(new KeyNotFoundException(exceptionMessage));
-
-            // Act
-            var result = await _sut.UpdateEvent(requestModel);
-
-            // Assert
-            var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
-            notFoundResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            notFoundResult.Value.Should().Be(exceptionMessage);
-            _mockEventService.Verify(s => s.UpdateEventAsync(requestModel), Times.Once);
-        }
 
         // =======================================================================
         // Тесты для    DeleteEvent
         // =======================================================================
 
-        // Внутри EventControllerTests
-
-        [Theory]
-        [AutoData]
-        public async Task DeleteEvent_ShouldReturnNoContent_WhenDeletionIsSuccessful(Guid id) {
-            
+        [Fact]
+        public async Task DeleteEvent_WhenEventExists_ShouldReturnNoContent() {
             // Arrange
-            _mockEventService.Setup(s => s.DeleteEventByIdAsync(id)).Returns(Task.CompletedTask);
+            var eventId = _fixture.Create<Guid>();
+            _mockEventService.Setup(s => s.DeleteEventByIdAsync(eventId)).Returns(Task.CompletedTask);
 
             // Act
-            var result = await _sut.DeleteEvent(id);
+            var result = await _sut.DeleteEvent(eventId);
 
             // Assert
-            var noContentResult = result.Should().BeOfType<NoContentResult>().Subject;
-            noContentResult.StatusCode.Should().Be(StatusCodes.Status204NoContent);
-            _mockEventService.Verify(s => s.DeleteEventByIdAsync(id), Times.Once);
+            result.Should().BeOfType<NoContentResult>();
+            _mockEventService.Verify(s => s.DeleteEventByIdAsync(eventId), Times.Once);
         }
 
-        [Theory]
-        [AutoData]
-        public async Task DeleteEvent_ShouldReturnNotFound_WhenServiceThrowsKeyNotFoundException(Guid id) {
-           
+        [Fact]
+        public async Task DeleteEvent_WhenServiceThrowsNotFoundException_ShouldRethrow() {
             // Arrange
-            var exceptionMessage = $"Event with ID {id} not found to delete";
-            _mockEventService.Setup(s => s.DeleteEventByIdAsync(id)).ThrowsAsync(new KeyNotFoundException(exceptionMessage));
+            var eventId = _fixture.Create<Guid>();
+            var serviceException = new NotFoundException("Event", eventId.ToString());
+            _mockEventService.Setup(s => s.DeleteEventByIdAsync(eventId)).ThrowsAsync(serviceException);
 
             // Act
-            var result = await _sut.DeleteEvent(id);
+            Func<Task> act = async () => await _sut.DeleteEvent(eventId);
 
             // Assert
-            var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
-            notFoundResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            notFoundResult.Value.Should().Be(exceptionMessage);
-            _mockEventService.Verify(s => s.DeleteEventByIdAsync(id), Times.Once);
-        
+            await act.Should().ThrowExactlyAsync<NotFoundException>().WithMessage(serviceException.Message);
+            _mockEventService.Verify(s => s.DeleteEventByIdAsync(eventId), Times.Once);
         }
 
     }
